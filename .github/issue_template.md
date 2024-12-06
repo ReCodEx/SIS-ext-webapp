@@ -11,9 +11,9 @@
 1.
 2.
 
-## Expected Behaviour
+## Expected Behavior
 
-<!-- What was the expected behaviour. -->
+<!-- What was the expected behavior. -->
 
 ## Actual Results
 
