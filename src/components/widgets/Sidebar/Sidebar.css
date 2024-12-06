@@ -1,0 +1,39 @@
+.sidebarAvatar {
+  margin-right: 6px;
+}
+
+.sidebarMenuItem {
+  white-space: normal;
+  display: inline-block;
+  vertical-align: top;
+}
+
+.sidebarEllipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 2.5em;
+  max-width: 100%;
+}
+
+.sidebarCursorPointer {
+  cursor: pointer;
+}
+
+.sidebarArrowIcon {
+  height: 15px !important;
+  transition: transform 0.5s ease;
+}
+
+.menu-is-opening .sidebarArrowIcon{
+  transform: rotate(-90deg);
+}
+
+.sidebarDropdown {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebarAvatarRemoveIcon {
+  position: absolute;
+  right: 0;
+}
