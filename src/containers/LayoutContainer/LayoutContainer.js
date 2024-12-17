@@ -5,9 +5,7 @@ import { IntlProvider } from 'react-intl';
 import moment from 'moment';
 
 import { setLang } from '../../redux/modules/app.js';
-import { toggleSize, toggleVisibility, collapse, unroll } from '../../redux/modules/sidebar.js';
 import { getLang, anyPendingFetchOperations } from '../../redux/selectors/app.js';
-import { isVisible, isCollapsed } from '../../redux/selectors/sidebar.js';
 import { isLoggedIn } from '../../redux/selectors/auth.js';
 import { getLoggedInUserSettings } from '../../redux/selectors/users.js';
 
@@ -50,7 +48,6 @@ class LayoutContainer extends Component {
   }
 
   componentDidMount() {
-    this.resizeSidebarToDefault(this.props);
     if (canUseDOM) {
       this.newPageLoading = true;
       this.pageHeight = -1;
@@ -68,22 +65,6 @@ class LayoutContainer extends Component {
     }
   }
 
-  resizeSidebarToDefault({ collapse, unroll, userUIData }) {
-    // open or hide the sidebar based on user's settings
-    const shouldBeOpen = this.getDefaultOpenedSidebar(userUIData);
-    shouldBeOpen ? unroll() : collapse();
-  }
-
-  getDefaultOpenedSidebar = userUIData =>
-    userUIData && typeof userUIData.openedSidebar !== 'undefined' ? userUIData.openedSidebar : true;
-
-  maybeHideSidebar = e => {
-    const { sidebarIsOpen, toggleVisibility } = this.props;
-    if (sidebarIsOpen) {
-      toggleVisibility();
-    }
-  };
-
   /**
    * Get messages for the given language or the deafult - English
    */
@@ -100,10 +81,6 @@ class LayoutContainer extends Component {
       lang,
       location: { pathname, search },
       isLoggedIn,
-      sidebarIsCollapsed,
-      sidebarIsOpen,
-      toggleSize,
-      toggleVisibility,
       pendingFetchOperations,
       setLang,
     } = this.props;
@@ -116,10 +93,6 @@ class LayoutContainer extends Component {
           <UrlContext.Provider value={{ lang }}>
             <Layout
               isLoggedIn={isLoggedIn}
-              sidebarIsCollapsed={sidebarIsCollapsed}
-              sidebarIsOpen={sidebarIsOpen}
-              toggleSize={toggleSize}
-              toggleVisibility={toggleVisibility}
               onCloseSidebar={this.maybeHideSidebar}
               lang={lang}
               setLang={setLang}
@@ -137,10 +110,6 @@ class LayoutContainer extends Component {
 
 LayoutContainer.propTypes = {
   lang: PropTypes.string,
-  toggleSize: PropTypes.func.isRequired,
-  toggleVisibility: PropTypes.func.isRequired,
-  collapse: PropTypes.func.isRequired,
-  unroll: PropTypes.func.isRequired,
   setLang: PropTypes.func.isRequired,
   pendingFetchOperations: PropTypes.bool,
   isLoggedIn: PropTypes.bool,
@@ -155,16 +124,10 @@ export default withRouter(
     (state, { location: { pathname, search } }) => ({
       lang: getLang(state),
       isLoggedIn: isLoggedIn(state),
-      sidebarIsCollapsed: isCollapsed(state),
-      sidebarIsOpen: isVisible(state),
       pendingFetchOperations: anyPendingFetchOperations(state),
       userSettings: getLoggedInUserSettings(state),
     }),
     dispatch => ({
-      toggleVisibility: () => dispatch(toggleVisibility()),
-      toggleSize: () => dispatch(toggleSize()),
-      collapse: () => dispatch(collapse()),
-      unroll: () => dispatch(unroll()),
       setLang: lang => {
         dispatch(setLang(lang));
         window.location.reload();

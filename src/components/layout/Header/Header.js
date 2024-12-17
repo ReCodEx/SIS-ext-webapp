@@ -10,14 +10,11 @@ import { getConfigVar } from '../../../helpers/config.js';
 const SKIN = getConfigVar('SKIN') || 'success';
 
 class Header extends Component {
-  toggleSidebarSize = e => {
+  toggleSidebar = e => {
     e.preventDefault();
-    this.props.toggleSidebarSize();
-  };
-
-  toggleSidebarVisibility = e => {
-    e.preventDefault();
-    this.props.toggleSidebarVisibility();
+    // flip AdminLTE body classes
+    window.document.body.classList.toggle('sidebar-collapse');
+    window.document.body.classList.toggle('sidebar-open');
   };
 
   render() {
@@ -28,7 +25,7 @@ class Header extends Component {
         <ClientOnly>
           <ul className="navbar-nav w-100">
             <li className="nav-item">
-              <a className="nav-link" data-widget="pushmenu" href="#" onClick={this.toggleSidebarSize}>
+              <a className="nav-link" data-widget="pushmenu" href="#" onClick={this.toggleSidebar}>
                 <Icon icon="bars" />
               </a>
             </li>

@@ -64,9 +64,11 @@ const Sidebar = ({
         </Link>
       </div>
 
-      <div className="sticky-top shadow border-bottom bg-body-secondary py-2">
-        <UserPanelContainer />
-      </div>
+      {Boolean(loggedInUser) && (
+        <div className="sticky-top shadow border-bottom bg-body-secondary py-2">
+          <UserPanelContainer />
+        </div>
+      )}
 
       <div className="sidebar-wrapper">
         <div data-overlayscrollbars-viewport="scrollbarHidden">
