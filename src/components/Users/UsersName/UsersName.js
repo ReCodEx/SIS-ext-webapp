@@ -6,7 +6,6 @@ import { FormattedMessage } from 'react-intl';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { lruMemoize } from 'reselect';
 
-import AvatarContainer from '../../../containers/AvatarContainer/AvatarContainer.js';
 import { UserRoleIcon } from '../../helpers/usersRoles.js';
 import Icon, { MailIcon, BanIcon } from '../../icons';
 import withLinks from '../../../helpers/withLinks.js';
@@ -42,12 +41,10 @@ const assembleName = ({ titlesBeforeName = '', firstName, lastName, titlesAfterN
 
 const UsersName = ({
   id,
-  avatarUrl,
   name,
   size = null,
   large = false,
   link = false,
-  noAvatar = false,
   privateData = null,
   showEmail = null,
   showExternalIdentifiers = false,
@@ -65,11 +62,6 @@ const UsersName = ({
 
   return (
     <span className={styles.wrapper}>
-      {(!privateData || privateData.isAllowed) && !noAvatar && (
-        <span className={styles.avatar}>
-          <AvatarContainer avatarUrl={avatarUrl} fullName={fullName} firstName={name.firstName} size={size} />
-        </span>
-      )}
       <span style={userNameStyle(size, large)}>
         {privateData && !privateData.isAllowed && (
           <BanIcon
@@ -179,12 +171,10 @@ UsersName.propTypes = {
     lastName: PropTypes.string.isRequired,
     titlesAfterName: PropTypes.string,
   }).isRequired,
-  avatarUrl: PropTypes.string,
   privateData: PropTypes.object,
   size: PropTypes.number,
   large: PropTypes.bool,
   link: PropTypes.oneOfType([PropTypes.string, PropTypes.func, PropTypes.bool]),
-  noAvatar: PropTypes.bool,
   showEmail: PropTypes.string,
   showExternalIdentifiers: PropTypes.bool,
   showRoleIcon: PropTypes.bool,

@@ -12,13 +12,13 @@ export const LANG_COOKIES_KEY = PERSISTENT_TOKENS_KEY_PREFIX + '_lang';
 /**
  * Store selected lang to both local storage and cookies.
  */
-export const storeLang = instanceId => {
-  if (canUseDOM && instanceId) {
+export const storeLang = lang => {
+  if (canUseDOM && lang) {
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(LANG_LOCAL_STORAGE_KEY, instanceId);
+      localStorage.setItem(LANG_LOCAL_STORAGE_KEY, lang);
     }
 
-    cookies.set(LANG_COOKIES_KEY, instanceId, { expires: 365 });
+    cookies.set(LANG_COOKIES_KEY, lang, { expires: 365 });
   }
 };
 
@@ -27,18 +27,18 @@ export const storeLang = instanceId => {
  */
 export const getLang = () => {
   if (typeof localStorage !== 'undefined') {
-    const instanceId = localStorage.getItem(LANG_LOCAL_STORAGE_KEY);
-    if (instanceId) {
-      storeLang(instanceId); // make sure the instanceId is stored in cookies for page refreshes
-      return instanceId;
+    const lang = localStorage.getItem(LANG_LOCAL_STORAGE_KEY);
+    if (lang) {
+      storeLang(lang); // make sure the lang is stored in cookies for page refreshes
+      return lang;
     }
   }
 
   if (typeof document !== 'undefined') {
-    const instanceId = cookies.get(LANG_COOKIES_KEY);
-    if (instanceId) {
-      storeLang(instanceId); // make sure the instanceId is stored in localStorage as well
-      return instanceId;
+    const lang = cookies.get(LANG_COOKIES_KEY);
+    if (lang) {
+      storeLang(lang); // make sure the lang is stored in localStorage as well
+      return lang;
     }
   }
 

@@ -10,7 +10,7 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
 
-const WEBPACK_DEV_SERVER_PORT = process.env.WEBPACK_DEV_SERVER_PORT || 8081;
+const WEBPACK_DEV_SERVER_PORT = process.env.WEBPACK_DEV_SERVER_PORT || 8085;
 const fileConfig = fs.readFileSync('etc/env.json', 'utf8');
 const parsedConfig = JSON.parse(fileConfig);
 const PORT = parsedConfig.PORT;

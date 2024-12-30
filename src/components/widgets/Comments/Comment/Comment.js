@@ -8,7 +8,6 @@ import withLinks from '../../../../helpers/withLinks.js';
 import Icon, { DeleteIcon } from '../../../icons';
 
 import { Posted, Posting, Failed } from './Status';
-import AvatarContainer from '../../../../containers/AvatarContainer/AvatarContainer.js';
 
 import * as styles from '../comments.less';
 
@@ -50,13 +49,6 @@ const Comment = ({
         {status === 'failed' && <Failed right={!right} repost={() => repost && repost(id)} />}
         {status === 'pending' && <Posting right={!right} />}
       </div>
-      <AvatarContainer
-        avatarUrl={user.avatarUrl}
-        fullName={user.name}
-        firstName={(user.firstName && user.firstName.substring(0, 1)) || user.avatarLetter || '?'}
-        size={40}
-        altClassName="direct-chat-img"
-      />
       <div className="direct-chat-text">
         {isFromCurrentUser && (
           <DeleteIcon
@@ -114,8 +106,6 @@ Comment.propTypes = {
     id: PropTypes.string.isRequired,
     name: PropTypes.string.isRequired,
     firstName: PropTypes.string,
-    avatarLetter: PropTypes.string,
-    avatarUrl: PropTypes.string,
   }).isRequired,
   postedAt: PropTypes.number,
   id: PropTypes.string.isRequired,

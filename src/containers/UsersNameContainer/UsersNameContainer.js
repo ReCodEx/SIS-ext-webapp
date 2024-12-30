@@ -29,7 +29,6 @@ class UsersNameContainer extends Component {
       user,
       large = false,
       link = false,
-      noAvatar = false,
       currentUser,
       isSimple = false,
       showEmail = null,
@@ -51,7 +50,6 @@ class UsersNameContainer extends Component {
           ) : (
             <UsersName
               {...user}
-              noAvatar={noAvatar}
               large={large}
               size={size}
               link={link}
@@ -74,7 +72,6 @@ UsersNameContainer.propTypes = {
   large: PropTypes.bool,
   user: ImmutablePropTypes.map,
   link: PropTypes.oneOfType([PropTypes.string, PropTypes.func, PropTypes.bool]),
-  noAvatar: PropTypes.bool,
   isSimple: PropTypes.bool,
   showEmail: PropTypes.string,
   showExternalIdentifiers: PropTypes.bool,

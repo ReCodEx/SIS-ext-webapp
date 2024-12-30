@@ -53,7 +53,7 @@
   "app.groups.removeFromGroup": "Odebrat ze skupiny",
   "app.header.languageSwitching.translationTitle": "Jazyková verze",
   "app.headerNotification.copiedToClippboard": "Zkopírováno do schránky.",
-  "app.homepage.title": "Úvodní stránka",
+  "app.homepage.title": "Rozšíření SIS-CodEx",
   "app.leaveGroup.confirm": "Opravdu chcete opustit tuto skupinu?",
   "app.localizedTexts.externalLink": "Popis je umístěn mimo ReCodEx",
   "app.localizedTexts.noText": "Pro danou lokalizaci není vyplněn ani text ani externí odkaz na zadaní. Tato úloha ještě není řádně dospecifikována.",

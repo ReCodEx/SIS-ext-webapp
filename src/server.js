@@ -79,9 +79,8 @@ const renderPage = (res, store = null, html = '') => {
 app.get('*', (req, res) => {
   // Extract the accessToken from the cookies for authenticated API requests from the server.
   const token = req.cookies[TOKEN_COOKIES_KEY]; // undefined === the user is not logged in
-  const instanceId = req.cookies[INSTANCEID_COOKIES_KEY] || null; // Selected instance
   const lang = req.cookies[LANG_COOKIES_KEY] || null; // Selected instance
-  const store = configureOurStore(undefined, token, instanceId, lang);
+  const store = configureOurStore(undefined, token, lang);
   const location = req.originalUrl;
 
   try {

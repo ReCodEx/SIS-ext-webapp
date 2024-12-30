@@ -5,7 +5,6 @@ import { Buffer } from 'buffer';
 import { addNotification } from '../../modules/notifications.js';
 import { newPendingFetchOperation, completedFetchOperation } from '../../modules/app.js';
 import { isTokenValid, decode } from '../../helpers/token';
-import { getLang } from '../../selectors/app.js';
 import { API_BASE, URL_PATH_PREFIX } from '../../../helpers/config.js';
 import { actionTypes as authActionTypes } from '../../modules/authTypes.js';
 import { canUseDOM } from '../../../helpers/common.js';
@@ -157,13 +156,6 @@ export const createApiCallPromise = (
   dispatch = undefined,
   getState = undefined
 ) => {
-  if (getState) {
-    const lang = getLang(getState());
-    if (lang) {
-      headers['X-ReCodEx-lang'] = lang;
-    }
-  }
-
   const call = createRequest(endpoint, query, method, headers, body, uploadFiles)
     .catch(err => detectUnreachableServer(err, dispatch))
     .then(res => {

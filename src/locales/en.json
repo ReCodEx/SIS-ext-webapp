@@ -53,7 +53,7 @@
   "app.groups.removeFromGroup": "Remove from group",
   "app.header.languageSwitching.translationTitle": "Translation",
   "app.headerNotification.copiedToClippboard": "Copied to clippboard.",
-  "app.homepage.title": "Home Page",
+  "app.homepage.title": "SiS-CodEx Extension",
   "app.leaveGroup.confirm": "Are you sure you want to leave this group?",
   "app.localizedTexts.externalLink": "The description is located beyond the realms of ReCodEx",
   "app.localizedTexts.noText": "There is no text nor link for given localization. The exercise is not fully specified yet.",

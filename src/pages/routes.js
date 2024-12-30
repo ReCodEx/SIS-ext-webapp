@@ -63,7 +63,11 @@ const r = (basePath, component, linkName = '', auth = undefined) => {
 };
 
 // Route/Link declarations
-const routesDescriptors = [r('', Home, 'HOME_URI'), r('app/user/:userId', User, 'USER_URI_FACTORY', true)];
+const routesDescriptors = [
+  r('', Home, 'HOME_URI'),
+  r('login/:token', Home, 'LOGIN_URI'),
+  r('app/user/:userId', User, 'USER_URI_FACTORY', true),
+];
 
 /*
  * Routes
@@ -154,7 +158,6 @@ export const getLinks = () => {
       API_BASE,
       GITHUB_BUGS_URL: 'https://github.com/ReCodEx/SIS-ext-webapp/issues',
       LOGIN_EXTERN_FINALIZATION_URI_FACTORY: service => `${URL_PATH_PREFIX}/login-extern/${service}`,
-      DOWNLOAD: fileId => `${API_BASE}/uploaded-files/${fileId}/download`,
     };
 
     // Gather links from router descriptors
@@ -163,9 +166,6 @@ export const getLinks = () => {
       .forEach(({ route, linkName, basePath }) => {
         linksCache[linkName] = createLink(basePath);
       });
-
-    // Additional link specializations...
-    linksCache.LOGIN_URI = linksCache.LOGIN_URI_FACTORY(''); // empty string means bare endpoint
   }
 
   return linksCache;

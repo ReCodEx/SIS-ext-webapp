@@ -44,8 +44,6 @@ class Header extends Component {
 
 Header.propTypes = {
   isLoggedIn: PropTypes.bool,
-  toggleSidebarSize: PropTypes.func.isRequired,
-  toggleSidebarVisibility: PropTypes.func.isRequired,
   currentLang: PropTypes.string.isRequired,
   setLang: PropTypes.func.isRequired,
   availableLangs: PropTypes.array,

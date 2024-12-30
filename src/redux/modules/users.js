@@ -9,18 +9,11 @@ import factory, {
 } from '../helpers/resourceManager';
 import { createApiAction } from '../middleware/apiMiddleware.js';
 
-import { actionTypes as emailVerificationActionTypes } from './emailVerification.js';
 import { actionTypes as authActionTypes } from './authTypes.js';
 
 export const additionalActionTypes = {
   // createActionsWithPostfixes generates all 4 constants for async operations
-  ...createActionsWithPostfixes('VALIDATE_REGISTRATION_DATA', 'recodex/users'),
-  ...createActionsWithPostfixes('FETCH_BY_IDS', 'recodex/users'),
-  ...createActionsWithPostfixes('CREATE_LOCAL_LOGIN', 'recodex/users'),
-  ...createActionsWithPostfixes('SET_ROLE', 'recodex/users'),
-  ...createActionsWithPostfixes('SET_IS_ALLOWED', 'recodex/users'),
-  ...createActionsWithPostfixes('INVITE_USER', 'recodex/users'),
-  ...createActionsWithPostfixes('ACCEPT_INVITATION', 'recodex/users'),
+  ...createActionsWithPostfixes('FETCH_BY_IDS', 'siscodex/users'),
 };
 
 const resourceName = 'users';
@@ -37,13 +30,6 @@ export const fetchManyEndpoint = '/users';
 export const loadUserData = actions.pushResource;
 export const fetchUser = actions.fetchResource;
 export const fetchUserIfNeeded = actions.fetchOneIfNeeded;
-export const validateRegistrationData = (email, password = null) =>
-  createApiAction({
-    type: additionalActionTypes.VALIDATE_REGISTRATION_DATA,
-    endpoint: '/users/validate-registration-data',
-    method: 'POST',
-    body: password === null ? { email } : { email, password },
-  });
 
 export const updateProfile = actions.updateResource;
 export const updateSettings = (id, body) => actions.updateResource(id, body, `/users/${id}/settings`);
@@ -64,48 +50,6 @@ export const fetchByIds = ids => (dispatch, _) =>
         })
       )
     : Promise.resolve({ value: [] }); // optimization, no ids => no actual call
-
-export const makeLocalLogin = id =>
-  createApiAction({
-    type: additionalActionTypes.CREATE_LOCAL_LOGIN,
-    endpoint: `/users/${id}/create-local`,
-    method: 'POST',
-    meta: { id },
-  });
-
-export const setRole = (id, role) =>
-  createApiAction({
-    type: additionalActionTypes.SET_ROLE,
-    endpoint: `/users/${id}/role`,
-    method: 'POST',
-    meta: { id, role },
-    body: { role },
-  });
-
-export const setIsAllowed = (id, isAllowed = true) =>
-  createApiAction({
-    type: additionalActionTypes.SET_IS_ALLOWED,
-    endpoint: `/users/${id}/allowed`,
-    method: 'POST',
-    meta: { id, isAllowed },
-    body: { isAllowed },
-  });
-
-export const inviteUser = body =>
-  createApiAction({
-    type: additionalActionTypes.INVITE_USER,
-    endpoint: '/users/invite',
-    method: 'POST',
-    body,
-  });
-
-export const acceptInvitation = (password, token) =>
-  createApiAction({
-    type: authActionTypes.LOGIN,
-    endpoint: '/users/accept-invitation',
-    method: 'POST',
-    body: { token, password, passwordConfirm: password },
-  });
 
 /**
  * Reducer
@@ -151,54 +95,6 @@ const reducer = handleActions(
         });
         return users;
       }),
-
-    [emailVerificationActionTypes.EMAIL_VERIFICATION_FULFILLED]: (state, { meta: { userId } }) =>
-      state.hasIn(['resources', userId])
-        ? state.updateIn(['resources', userId, 'data'], userData =>
-            userData === null ? null : userData.set('isVerified', true)
-          )
-        : state,
-
-    [additionalActionTypes.CREATE_LOCAL_LOGIN_PENDING]: (state, { meta: { id } }) =>
-      state.setIn(['resources', id, 'data', 'privateData', 'isLocal'], true),
-
-    [additionalActionTypes.CREATE_LOCAL_LOGIN_REJECTED]: (state, { meta: { id } }) =>
-      state.setIn(['resources', id, 'data', 'privateData', 'isLocal'], false),
-
-    [additionalActionTypes.CREATE_LOCAL_LOGIN_FULFILLED]: (state, { payload, meta: { id } }) =>
-      state.setIn(['resources', id, 'data'], fromJS(payload)),
-
-    [additionalActionTypes.SET_ROLE_FULFILLED]: (state, { payload: data }) =>
-      data && data.id
-        ? state.setIn(
-            ['resources', data.id],
-            createRecord({
-              data,
-              state: resourceStatus.FULFILLED,
-              didInvalidate: false,
-              lastUpdate: Date.now(),
-            })
-          )
-        : state,
-
-    [additionalActionTypes.SET_IS_ALLOWED_PENDING]: (state, { meta: { id } }) =>
-      state.setIn(['resources', id, 'data', 'isAllowed-pending'], true),
-
-    [additionalActionTypes.SET_IS_ALLOWED_REJECTED]: (state, { meta: { id } }) =>
-      state.setIn(['resources', id, 'data', 'isAllowed-pending'], false),
-
-    [additionalActionTypes.SET_IS_ALLOWED_FULFILLED]: (state, { payload: data, meta: { id } }) =>
-      data && data.id
-        ? state.setIn(
-            ['resources', data.id],
-            createRecord({
-              data,
-              state: resourceStatus.FULFILLED,
-              didInvalidate: false,
-              lastUpdate: Date.now(),
-            })
-          )
-        : state.setIn(['resources', id, 'data', 'isAllowed-pending'], false),
 
     [authActionTypes.LOGIN_FULFILLED]: (state, { payload: { user } }) =>
       user && user.id

@@ -4,7 +4,7 @@
 
 import { arrayToObject } from '../../../helpers/common.js';
 
-const defaultPrefix = resourceName => `recodex/resource/${resourceName}`;
+const defaultPrefix = resourceName => `siscodex/resource/${resourceName}`;
 const twoPhaseActions = ['ADD', 'UPDATE', 'REMOVE', 'FETCH', 'FETCH_MANY'];
 const onePhaseActions = ['INVALIDATE'];
 

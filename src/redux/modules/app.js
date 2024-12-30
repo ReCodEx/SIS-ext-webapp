@@ -2,9 +2,9 @@ import { createAction, handleActions } from 'redux-actions';
 import { fromJS } from 'immutable';
 
 export const actionTypes = {
-  SET_LANG: 'recodex/app/SET_LANG',
-  NEW_PENDING_FETCH_OPERATION: 'recodex/app/NEW_PENDING_FETCH_OPERATION',
-  COMPLETED_FETCH_OPERATION: 'recodex/app/COMPLETED_FETCH_OPERATION',
+  SET_LANG: 'siscodex/app/SET_LANG',
+  NEW_PENDING_FETCH_OPERATION: 'siscodex/app/NEW_PENDING_FETCH_OPERATION',
+  COMPLETED_FETCH_OPERATION: 'siscodex/app/COMPLETED_FETCH_OPERATION',
 };
 
 const createInitialState = lang =>

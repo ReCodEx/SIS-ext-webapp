@@ -8,7 +8,7 @@ import { fas as solidIcons } from '@fortawesome/free-solid-svg-icons';
 import { fab as brandIcons } from '@fortawesome/free-brands-svg-icons';
 
 import LayoutContainer from '../LayoutContainer';
-import { loggedInUserIdSelector, selectedInstanceId, accessTokenSelector } from '../../redux/selectors/auth.js';
+import { loggedInUserIdSelector, accessTokenSelector } from '../../redux/selectors/auth.js';
 import { fetchUserIfNeeded } from '../../redux/modules/users.js';
 import { fetchUserStatus } from '../../redux/selectors/users.js';
 import { isTokenValid, isTokenInNeedOfRefreshment } from '../../redux/helpers/token';
@@ -94,8 +94,8 @@ class App extends Component {
   };
 
   render() {
-    const { userId, instanceId } = this.props;
-    return userId && !instanceId ? (
+    const { userId } = this.props;
+    return userId ? (
       <div
         style={{
           textAlign: 'center',
@@ -115,12 +115,10 @@ class App extends Component {
 App.propTypes = {
   accessToken: PropTypes.object,
   userId: PropTypes.string,
-  instanceId: PropTypes.string,
   isLoggedIn: PropTypes.bool.isRequired,
   fetchUserStatus: PropTypes.string,
   loadAsync: PropTypes.func.isRequired,
   refreshToken: PropTypes.func.isRequired,
-  removeUserFromSwitching: PropTypes.func.isRequired,
   logout: PropTypes.func.isRequired,
   addNotification: PropTypes.func.isRequired,
   location: withRouterProps.location,
@@ -133,7 +131,6 @@ export default withRouter(
       return {
         accessToken: accessTokenSelector(state),
         userId,
-        instanceId: selectedInstanceId(state),
         isLoggedIn: Boolean(userId),
         fetchUserStatus: fetchUserStatus(state, userId),
       };

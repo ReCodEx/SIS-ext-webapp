@@ -19,7 +19,7 @@ const engine = filter(createEngine(`${PERSISTENT_TOKENS_KEY_PREFIX}/store`), ['u
 
 const isDev = () => process.env.NODE_ENV === 'development';
 
-export const configureOurStore = (preloadedState, token, instanceId, lang) => {
+export const configureOurStore = (preloadedState, token, lang) => {
   const reducer = storage.reducer(createReducer(token, lang));
   const store = configureStore({
     reducer,

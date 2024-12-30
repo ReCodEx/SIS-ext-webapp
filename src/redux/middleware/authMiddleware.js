@@ -13,7 +13,6 @@ const PERSISTENT_TOKENS_KEY_PREFIX = getConfigVar('PERSISTENT_TOKENS_KEY_PREFIX'
 export const TOKEN_LOCAL_STORAGE_KEY = PERSISTENT_TOKENS_KEY_PREFIX + '/accessToken';
 export const TOKEN_COOKIES_KEY = PERSISTENT_TOKENS_KEY_PREFIX + '_accessToken';
 
-export const INSTANCEID_LOCAL_STORAGE_KEY = PERSISTENT_TOKENS_KEY_PREFIX + '/instanceId';
 export const INSTANCEID_COOKIES_KEY = PERSISTENT_TOKENS_KEY_PREFIX + '_instanceId';
 
 /**
@@ -66,55 +65,6 @@ export const getToken = () => {
   return null;
 };
 
-/**
- * Store instance ID to both local storage and cookies.
- */
-export const storeInstanceId = instanceId => {
-  if (canUseDOM && instanceId) {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(INSTANCEID_LOCAL_STORAGE_KEY, instanceId);
-    }
-
-    cookies.set(INSTANCEID_COOKIES_KEY, instanceId, { expires: 365 });
-  }
-};
-
-/**
- * Remove instance ID from both local storage and cookies.
- */
-export const removeInstanceId = () => {
-  if (typeof localStorage !== 'undefined') {
-    localStorage.removeItem(INSTANCEID_LOCAL_STORAGE_KEY);
-  }
-
-  if (typeof document !== 'undefined') {
-    cookies.erase(INSTANCEID_COOKIES_KEY);
-  }
-};
-
-/**
- * Fetch the selected instance ID from local storage and if it fails, try the cookies.
- */
-export const getInstanceId = () => {
-  if (typeof localStorage !== 'undefined') {
-    const instanceId = localStorage.getItem(INSTANCEID_LOCAL_STORAGE_KEY);
-    if (instanceId) {
-      storeInstanceId(instanceId); // make sure the instanceId is stored in cookies for page refreshes
-      return instanceId;
-    }
-  }
-
-  if (typeof document !== 'undefined') {
-    const instanceId = cookies.get(INSTANCEID_COOKIES_KEY);
-    if (instanceId) {
-      storeInstanceId(instanceId); // make sure the instanceId is stored in localStorage as well
-      return instanceId;
-    }
-  }
-
-  return null;
-};
-
 const middleware = store => next => action => {
   // manage access token storage
   switch (action && action.type) {
@@ -128,20 +78,14 @@ const middleware = store => next => action => {
         break;
       }
       storeToken(action.payload.accessToken);
-      storeInstanceId(safeGet(action, ['meta', 'instanceId'], action.payload.user.privateData.instancesIds[0]));
       if (typeof window !== 'undefined') {
-        store.dispatch(setLang(action.payload.user.privateData.settings.defaultLanguage));
+        store.dispatch(setLang(action.payload.user.defaultLanguage));
       }
       break;
 
     case actionTypes.LOGIN_REJECTED:
     case actionTypes.LOGOUT:
       removeToken();
-      removeInstanceId();
-      break;
-
-    case actionTypes.SELECT_INSTANCE:
-      storeInstanceId(action.payload.instanceId);
       break;
 
     case CALL_API:

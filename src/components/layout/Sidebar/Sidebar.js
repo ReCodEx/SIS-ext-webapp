@@ -11,11 +11,9 @@ import MenuTitle from '../../widgets/Sidebar/MenuTitle';
 import MenuItem from '../../widgets/Sidebar/MenuItem';
 import { LoadingIcon } from '../../icons';
 import { getJsData } from '../../../redux/helpers/resourceManager';
-import { isSupervisorRole, isEmpoweredSupervisorRole, isSuperadminRole } from '../../helpers/usersRoles.js';
+import { isSupervisorRole, isSuperadminRole } from '../../helpers/usersRoles.js';
 import withLinks from '../../../helpers/withLinks.js';
-import { getExternalIdForCAS } from '../../../helpers/cas.js';
 import { getConfigVar } from '../../../helpers/config.js';
-import Admin from './Admin.js';
 
 import './sidebar.css';
 
@@ -23,23 +21,7 @@ const URL_PREFIX = getConfigVar('URL_PATH_PREFIX');
 
 const getUserData = lruMemoize(user => getJsData(user));
 
-const Sidebar = ({
-  pendingFetchOperations,
-  loggedInUser,
-  effectiveRole = null,
-  currentUrl,
-  links: {
-    HOME_URI,
-    FAQ_URL,
-    LOGIN_URI,
-    REGISTRATION_URI,
-    DASHBOARD_URI,
-    EXERCISES_URI,
-    PIPELINES_URI,
-    ARCHIVE_URI,
-    SIS_INTEGRATION_URI,
-  },
-}) => {
+const Sidebar = ({ pendingFetchOperations, loggedInUser, currentUrl, links: { HOME_URI } }) => {
   const user = getUserData(loggedInUser);
 
   return (
@@ -84,14 +66,7 @@ const Sidebar = ({
                   title={<FormattedMessage id="app.sidebar.menu.signIn" defaultMessage="Sign in" />}
                   icon="sign-in-alt"
                   currentPath={currentUrl}
-                  link={LOGIN_URI}
-                />
-                <MenuItem
-                  title={<FormattedMessage id="app.sidebar.menu.createAccount" defaultMessage="Create account" />}
-                  isActive={false}
-                  icon="user-plus"
-                  currentPath={currentUrl}
-                  link={REGISTRATION_URI}
+                  link={HOME_URI}
                 />
               </ul>
             )}
@@ -104,58 +79,13 @@ const Sidebar = ({
                   role="menu"
                   data-accordion="false">
                   <MenuTitle title={<FormattedMessage id="app.sidebar.menu.title" defaultMessage="Menu" />} />
-                  <MenuItem
-                    title={<FormattedMessage id="app.sidebar.menu.dashboard" defaultMessage="Dashboard" />}
-                    icon="tachometer-alt"
-                    currentPath={currentUrl}
-                    link={DASHBOARD_URI}
-                  />
+                  <MenuItem title="TODO" icon="tachometer-alt" currentPath={currentUrl} link="TODO" />
 
-                  {isSupervisorRole(effectiveRole) && (
-                    <MenuItem
-                      title={<FormattedMessage id="app.sidebar.menu.exercises" defaultMessage="Exercises" />}
-                      icon="puzzle-piece"
-                      currentPath={currentUrl}
-                      link={EXERCISES_URI}
-                    />
-                  )}
-
-                  {isEmpoweredSupervisorRole(effectiveRole) && (
-                    <MenuItem
-                      title={<FormattedMessage id="app.sidebar.menu.pipelines" defaultMessage="Pipelines" />}
-                      icon="random"
-                      currentPath={currentUrl}
-                      link={PIPELINES_URI}
-                    />
-                  )}
-
-                  <MenuItem
-                    title={<FormattedMessage id="app.sidebar.menu.archive" defaultMessage="Archive" />}
-                    icon="archive"
-                    currentPath={currentUrl}
-                    link={ARCHIVE_URI}
-                  />
-
-                  {Boolean(getExternalIdForCAS(user)) && (
-                    <MenuItem
-                      icon="id-badge"
-                      title={<FormattedMessage id="app.sidebar.menu.admin.sis" defaultMessage="SIS Integration" />}
-                      currentPath={currentUrl}
-                      link={SIS_INTEGRATION_URI}
-                    />
-                  )}
-
-                  <MenuItem
-                    title={<FormattedMessage id="app.sidebar.menu.faq" defaultMessage="FAQ" />}
-                    icon={['far', 'question-circle']}
-                    link={FAQ_URL}
-                    currentPath={currentUrl}
-                  />
+                  {isSupervisorRole(user.role) && <></>}
+                  {isSuperadminRole(user.role) && <></>}
                 </ul>
               </>
             )}
-
-            {isSuperadminRole(effectiveRole) && <Admin currentUrl={currentUrl} />}
           </nav>
         </div>
       </div>
@@ -166,7 +96,6 @@ const Sidebar = ({
 Sidebar.propTypes = {
   pendingFetchOperations: PropTypes.bool,
   loggedInUser: ImmutablePropTypes.map,
-  effectiveRole: PropTypes.string,
   currentUrl: PropTypes.string,
   links: PropTypes.object,
 };

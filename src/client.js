@@ -7,7 +7,7 @@ import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 
 import { configureOurStore } from './redux/store.js';
-import { getToken, getInstanceId } from './redux/middleware/authMiddleware.js';
+import { getToken } from './redux/middleware/authMiddleware.js';
 import { getLang } from './redux/middleware/langMiddleware.js';
 import App from './containers/App/index.js';
 
@@ -66,7 +66,7 @@ if (ini) {
   });
 }
 
-const store = configureOurStore(state, getToken(), getInstanceId(), getLang());
+const store = configureOurStore(state, getToken(), getLang());
 
 const container = document.getElementById('root');
 const root = createRoot(container);
