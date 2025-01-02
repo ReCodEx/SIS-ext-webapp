@@ -16,11 +16,10 @@ import { addNotification } from '../../redux/modules/notifications.js';
 import { logout, refresh } from '../../redux/modules/auth.js';
 import { resourceStatus } from '../../redux/helpers/resourceManager';
 import { suspendAbortPendingRequestsOptimization } from '../../pages/routes.js';
-import { LoadingIcon } from '../../components/icons';
 import { SESSION_EXPIRED_MESSAGE } from '../../redux/helpers/api/tools.js';
 import withRouter, { withRouterProps } from '../../helpers/withRouter.js';
 
-import './recodex.css';
+import './siscodex.css';
 
 library.add(regularIcons, solidIcons, brandIcons);
 
@@ -94,17 +93,7 @@ class App extends Component {
   };
 
   render() {
-    const { userId } = this.props;
-    return userId ? (
-      <div
-        style={{
-          textAlign: 'center',
-          height: '100vh',
-          lineHeight: '100vh',
-        }}>
-        <LoadingIcon size="3x" />
-      </div>
-    ) : (
+    return (
       <Routes>
         <Route path="*" element={<LayoutContainer />} />
       </Routes>

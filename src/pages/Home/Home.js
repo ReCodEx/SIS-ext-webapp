@@ -5,15 +5,19 @@ import { FormattedMessage, injectIntl } from 'react-intl';
 import { connect } from 'react-redux';
 
 import PageContent from '../../components/layout/PageContent';
-import { HomeIcon, LoadingIcon } from '../../components/icons';
+import { HomeIcon, LoadingIcon, ReturnIcon, WarningIcon } from '../../components/icons';
+import Callout from '../../components/widgets/Callout';
 
 import { setLang } from '../../redux/modules/app.js';
 import { login } from '../../redux/modules/auth.js';
 
+import { getReturnUrl, setReturnUrl } from '../../helpers/localStorage.js';
 import { knownLocalesNames } from '../../helpers/localizedData.js';
 import withLinks from '../../helpers/withLinks.js';
 
 class Home extends Component {
+  state = { failed: false };
+
   componentDidMount() {
     const {
       params: { token = null },
@@ -23,8 +27,17 @@ class Home extends Component {
       links: { HOME_URI },
     } = this.props;
 
-    // switch to the right language if necessary
+    this.setState({ failed: false });
+
     const urlParams = new URLSearchParams(document.location.search);
+
+    // save return url into local storage (if any)
+    const returnUrl = urlParams.get('return');
+    if (returnUrl) {
+      setReturnUrl(returnUrl);
+    }
+
+    // switch to the right language if necessary
     const urlLocale = urlParams.get('locale');
     if (urlLocale && knownLocalesNames[urlLocale] && urlLocale !== locale) {
       setLang(urlLocale);
@@ -32,7 +45,10 @@ class Home extends Component {
 
     // login with temp token
     if (token) {
-      login(token).then(() => window.location.replace(HOME_URI));
+      login(token).then(
+        () => window.location.replace(HOME_URI),
+        () => this.setState({ failed: true })
+      );
     }
   }
 
@@ -46,7 +62,23 @@ class Home extends Component {
         icon={<HomeIcon />}
         title={<FormattedMessage id="app.homepage.title" defaultMessage="SiS-CodEx Extension" />}>
         <div>
-          {token ? (
+          {this.state.failed ? (
+            <Callout variant="danger" className="my-3">
+              <p>
+                <WarningIcon gapRight className="text-danger" />
+                <FormattedMessage
+                  id="app.homepage.processingTokenFailed"
+                  defaultMessage="Authentication process failed."
+                />
+              </p>
+              <p>
+                <a href={getReturnUrl()}>
+                  <ReturnIcon gapRight />
+                  <FormattedMessage id="app.homepage.returnToReCodEx" defaultMessage="Return to ReCodEx..." />
+                </a>
+              </p>
+            </Callout>
+          ) : token ? (
             <p>
               <LoadingIcon gapRight />
               <FormattedMessage id="app.homepage.processingToken" defaultMessage="Processing authentication token..." />

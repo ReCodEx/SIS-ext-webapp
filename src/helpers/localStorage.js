@@ -1,6 +1,7 @@
 import { getConfigVar } from './config.js';
 
 const PERSISTENT_TOKENS_KEY_PREFIX = (getConfigVar('PERSISTENT_TOKENS_KEY_PREFIX') || 'rex-sis') + '/';
+const RECODEX_URI = getConfigVar('RECODEX_URI') || null;
 
 /**
  * Test whether local storage is available to us (i.e., we are on a client).
@@ -127,3 +128,15 @@ export const removeListener = id => {
     }
   }
 };
+
+/**
+ * Get return URL for ReCodEx web app
+ * @returns {string|null} URL or null
+ */
+export const getReturnUrl = () => storageGetItem('returnUrl') || RECODEX_URI;
+
+/**
+ * Get return URL for ReCodEx web app
+ * @returns {string|null} URL or null
+ */
+export const setReturnUrl = url => (url ? storageSetItem('returnUrl', url) : storageRemoveItem('returnUrl'));

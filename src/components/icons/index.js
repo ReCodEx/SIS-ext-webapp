@@ -78,6 +78,7 @@ export const NoteIcon = props => <Icon {...props} icon={['far', 'sticky-note']} 
 export const ObserverIcon = props => <Icon {...props} icon="binoculars" />;
 export const OutputIcon = props => <Icon {...props} icon="sign-out-alt" />;
 export const PastDeadlineIcon = props => <Icon {...props} icon="skull" />;
+export const PersonalDataIcon = props => <Icon {...props} icon="id-card" />;
 export const PipelineIcon = props => <Icon {...props} icon="random" />;
 export const PipelineStructureIcon = props => <Icon {...props} icon="sitemap" />;
 export const PlagiarismIcon = props => <Icon icon="person-circle-exclamation" {...props} />;
@@ -93,6 +94,7 @@ export const RefreshIcon = props => <Icon {...props} icon="sync" />;
 export const RemoveIcon = props => <Icon {...props} icon="minus-circle" />;
 export const RemoveUserIcon = props => <Icon {...props} icon="user-slash" />;
 export const ResultsIcon = props => <Icon {...props} icon="chart-line" />;
+export const ReturnIcon = props => <Icon {...props} icon="person-walking-arrow-loop-left" />;
 export const ReviewIcon = ({ review = null, reviewRequest = false, ...props }) =>
   review && review.closedAt ? (
     <Icon {...props} icon={review.issues > 0 ? 'file-circle-exclamation' : 'file-circle-check'} />

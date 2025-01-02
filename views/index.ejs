@@ -76,15 +76,7 @@
       <%= ((new Date()).getMonth() === 3 && (new Date()).getDate() === 1) ? 'Loudím' : 'Loading' %>...
     </div>
 
-    <div id="root">
-      <%- html %>
-    </div>
-    <% if (reduxState) { %>
-    <script>
-      window.__INITIAL_STATE__ = <%- reduxState %>;
-    </script>
-    <% } %>
-
+    <div id="root"></div>
     <script>
       window.__RECODEX_CONFIG__ = <%- config %>;
     </script>

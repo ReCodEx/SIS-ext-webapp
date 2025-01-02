@@ -27,15 +27,8 @@ export { actionTypes };
 
 export const fetchManyEndpoint = '/users';
 
-export const loadUserData = actions.pushResource;
 export const fetchUser = actions.fetchResource;
 export const fetchUserIfNeeded = actions.fetchOneIfNeeded;
-
-export const updateProfile = actions.updateResource;
-export const updateSettings = (id, body) => actions.updateResource(id, body, `/users/${id}/settings`);
-export const updateUIData = (id, uiData, overwrite = false) =>
-  actions.updateResource(id, { uiData, overwrite }, `/users/${id}/ui-data`);
-export const deleteUser = actions.removeResource;
 
 // we need the async dispatch here so we can return a resolved promise for an empty array
 export const fetchByIds = ids => (dispatch, _) =>

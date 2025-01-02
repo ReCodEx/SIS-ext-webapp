@@ -7,13 +7,13 @@ import { Link } from 'react-router-dom';
 
 import UserPanelContainer from '../../../containers/UserPanelContainer';
 
-import MenuTitle from '../../widgets/Sidebar/MenuTitle';
 import MenuItem from '../../widgets/Sidebar/MenuItem';
 import { LoadingIcon } from '../../icons';
 import { getJsData } from '../../../redux/helpers/resourceManager';
 import { isSupervisorRole, isSuperadminRole } from '../../helpers/usersRoles.js';
 import withLinks from '../../../helpers/withLinks.js';
 import { getConfigVar } from '../../../helpers/config.js';
+import { getReturnUrl } from '../../../helpers/localStorage.js';
 
 import './sidebar.css';
 
@@ -55,37 +55,31 @@ const Sidebar = ({ pendingFetchOperations, loggedInUser, currentUrl, links: { HO
       <div className="sidebar-wrapper">
         <div data-overlayscrollbars-viewport="scrollbarHidden">
           <nav className="mt-2">
-            {!user && (
-              <ul
-                className="nav nav-pills sidebar-menu flex-column"
-                data-lte-toggle="treeview"
-                role="menu"
-                data-accordion="false">
-                <MenuTitle title="ReCodEx" />
-                <MenuItem
-                  title={<FormattedMessage id="app.sidebar.menu.signIn" defaultMessage="Sign in" />}
-                  icon="sign-in-alt"
-                  currentPath={currentUrl}
-                  link={HOME_URI}
-                />
-              </ul>
-            )}
-
-            {Boolean(user) && (
-              <>
-                <ul
-                  className="nav nav-pills sidebar-menu flex-column"
-                  data-lte-toggle="treeview"
-                  role="menu"
-                  data-accordion="false">
-                  <MenuTitle title={<FormattedMessage id="app.sidebar.menu.title" defaultMessage="Menu" />} />
-                  <MenuItem title="TODO" icon="tachometer-alt" currentPath={currentUrl} link="TODO" />
+            <ul
+              className="nav nav-pills sidebar-menu flex-column"
+              data-lte-toggle="treeview"
+              role="menu"
+              data-accordion="false">
+              {user ? (
+                <>
+                  <MenuItem
+                    title={<FormattedMessage id="app.sidebar.menu.user" defaultMessage="Personal Data" />}
+                    icon="id-card"
+                    currentPath={currentUrl}
+                    link="TODO"
+                  />
 
                   {isSupervisorRole(user.role) && <></>}
                   {isSuperadminRole(user.role) && <></>}
-                </ul>
-              </>
-            )}
+                </>
+              ) : (
+                <MenuItem
+                  title={<FormattedMessage id="app.sidebar.menu.return" defaultMessage="Back to ReCodEx" />}
+                  icon="person-walking-arrow-loop-left"
+                  link={getReturnUrl()}
+                />
+              )}
+            </ul>
           </nav>
         </div>
       </div>

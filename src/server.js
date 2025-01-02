@@ -2,7 +2,6 @@
 import 'cross-fetch/dist/node-polyfill.js';
 
 // server setup
-import serialize from 'serialize-javascript';
 import Express from 'express';
 import ejs from 'ejs';
 import Helmet from 'react-helmet';
@@ -13,7 +12,7 @@ import { globSync } from 'glob';
 import { configureOurStore } from './redux/store.js';
 import { loggedInUserIdSelector } from './redux/selectors/auth.js';
 import { match } from './pages/routes.js';
-import { TOKEN_COOKIES_KEY, INSTANCEID_COOKIES_KEY } from './redux/middleware/authMiddleware.js';
+import { TOKEN_COOKIES_KEY } from './redux/middleware/authMiddleware.js';
 import { LANG_COOKIES_KEY } from './redux/middleware/langMiddleware.js';
 
 import '@formatjs/intl-pluralrules/polyfill.js';
@@ -63,12 +62,10 @@ app.use(cookieParser());
  * will not work at all. SSR may be reintroduce in the future, but this should be rewritten.
  */
 const renderPage = (res, store = null, html = '') => {
-  const reduxState = store ? serialize(store.getState(), { isJSON: true }) : 'undefined';
   const head = Helmet.rewind();
   res.render('index', {
     html,
     head,
-    reduxState,
     bundle,
     style,
     config,

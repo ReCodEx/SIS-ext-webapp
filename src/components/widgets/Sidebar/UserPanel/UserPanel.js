@@ -4,7 +4,8 @@ import { FormattedMessage, FormattedRelativeTime } from 'react-intl';
 import { Tooltip, OverlayTrigger } from 'react-bootstrap';
 
 import UserName from '../../../Users/UsersName';
-import Icon from '../../../icons';
+import { ReturnIcon } from '../../../icons';
+import { getReturnUrl, setReturnUrl } from '../../../../helpers/localStorage';
 
 import './userPanel.css';
 
@@ -37,8 +38,15 @@ class UserPanel extends Component {
                 onClick={e => {
                   e.preventDefault();
                   logout();
+
+                  // let's go back to ReCodEx after the logout...
+                  const url = getReturnUrl();
+                  if (url && window) {
+                    setReturnUrl(null);
+                    window.location.assign(url);
+                  }
                 }}>
-                <Icon icon="sign-out-alt" className="text-danger sidebar-up-collapse-gaps" gapLeft={2} gapRight={1} />
+                <ReturnIcon className="text-danger sidebar-up-collapse-gaps" gapRight />
                 <span className="sidebar-up-hide-collapsed">
                   <FormattedMessage id="app.logout" defaultMessage="Logout" />
                 </span>
