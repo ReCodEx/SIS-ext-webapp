@@ -14,8 +14,8 @@ StandardOutput=null
 StandardError=journal
 User=recodex
 Group=recodex
-WorkingDirectory=/opt/recodex-SIS-ext-web
-ExecStart=/usr/bin/node /opt/recodex-SIS-ext-web/bin/server.mjs
+WorkingDirectory=/opt/recodex/SIS-ext-webapp
+ExecStart=/usr/bin/node /opt/recodex/SIS-ext-webapp/bin/server.mjs
 Restart=on-failure
 RestartSec=5
 
