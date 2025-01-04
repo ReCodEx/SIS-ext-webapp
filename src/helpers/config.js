@@ -4,7 +4,7 @@ import { safeGet, canUseDOM } from './common.js';
 export const getConfigVar = name => {
   let MY_VAR = '';
   if (canUseDOM) {
-    MY_VAR = safeGet(window, ['__RECODEX_CONFIG__', name], '');
+    MY_VAR = safeGet(window, ['__SISCODEX_CONFIG__', name], '');
   } else {
     MY_VAR = JSON.parse(fs.readFileSync('etc/env.json', 'utf8'))[name] || '';
   }

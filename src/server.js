@@ -90,7 +90,7 @@ app.get('*', (req, res) => {
      */
 
     const userId = loggedInUserIdSelector(store.getState()); // try to get the user ID from the token (if any)
-    const { redirect /*, params, loadAsync */ } = match(location, Boolean(userId));
+    const { redirect = null /*, params, loadAsync */ } = match(location, Boolean(userId));
 
     if (redirect) {
       res.redirect(302, redirect);

@@ -90,7 +90,11 @@ const getRedirect = (routeObj, urlPath, isLoggedIn) => {
  */
 export const match = (urlPath, isLoggedIn) => {
   const routeObj = routesDescriptors.find(({ route }) => matchPath(route, urlPath) !== null);
-  const component = routeObj && unwrap(routeObj.component);
+  if (!routeObj) {
+    return {};
+  }
+
+  const component = unwrap(routeObj.component);
 
   const redirect = getRedirect(routeObj, urlPath, isLoggedIn);
   const match = matchPath(routeObj.route, urlPath);
