@@ -21,7 +21,7 @@ const URL_PREFIX = getConfigVar('URL_PATH_PREFIX');
 
 const getUserData = lruMemoize(user => getJsData(user));
 
-const Sidebar = ({ pendingFetchOperations, loggedInUser, currentUrl, links: { HOME_URI } }) => {
+const Sidebar = ({ pendingFetchOperations, loggedInUser, currentUrl, links: { HOME_URI, USER_URI } }) => {
   const user = getUserData(loggedInUser);
 
   return (
@@ -66,7 +66,7 @@ const Sidebar = ({ pendingFetchOperations, loggedInUser, currentUrl, links: { HO
                     title={<FormattedMessage id="app.sidebar.menu.user" defaultMessage="Personal Data" />}
                     icon="id-card"
                     currentPath={currentUrl}
-                    link="TODO"
+                    link={USER_URI}
                   />
 
                   {isSupervisorRole(user.role) && <></>}

@@ -7,7 +7,6 @@ import factory, {
   resourceStatus,
   createActionsWithPostfixes,
 } from '../helpers/resourceManager';
-import { createApiAction } from '../middleware/apiMiddleware.js';
 
 import { actionTypes as authActionTypes } from './authTypes.js';
 
@@ -29,20 +28,6 @@ export const fetchManyEndpoint = '/users';
 
 export const fetchUser = actions.fetchResource;
 export const fetchUserIfNeeded = actions.fetchOneIfNeeded;
-
-// we need the async dispatch here so we can return a resolved promise for an empty array
-export const fetchByIds = ids => (dispatch, _) =>
-  ids && ids.length > 0
-    ? dispatch(
-        createApiAction({
-          type: additionalActionTypes.FETCH_BY_IDS,
-          endpoint: '/users/list',
-          method: 'POST',
-          meta: { ids },
-          body: { ids },
-        })
-      )
-    : Promise.resolve({ value: [] }); // optimization, no ids => no actual call
 
 /**
  * Reducer

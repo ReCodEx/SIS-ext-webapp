@@ -66,7 +66,7 @@ const r = (basePath, component, linkName = '', auth = undefined) => {
 const routesDescriptors = [
   r('', Home, 'HOME_URI'),
   r('login/:token', Home, 'LOGIN_URI'),
-  r('app/user/:userId', User, 'USER_URI_FACTORY', true),
+  r('app/user', User, 'USER_URI', true),
 ];
 
 /*
