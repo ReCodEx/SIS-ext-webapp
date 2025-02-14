@@ -3,9 +3,18 @@ import PropTypes from 'prop-types';
 // import ImmutablePropTypes from 'react-immutable-proptypes';
 import { FormattedMessage, injectIntl } from 'react-intl';
 import { connect } from 'react-redux';
+import { Row, Col } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 
 import PageContent from '../../components/layout/PageContent';
-import { HomeIcon, LoadingIcon, ReturnIcon, WarningIcon } from '../../components/icons';
+import Icon, {
+  HomeIcon,
+  LinkIcon,
+  LoadingIcon,
+  ReturnIcon,
+  UserProfileIcon,
+  WarningIcon,
+} from '../../components/icons';
 import Callout from '../../components/widgets/Callout';
 
 import { setLang } from '../../redux/modules/app.js';
@@ -55,6 +64,7 @@ class Home extends Component {
   render() {
     const {
       params: { token = null },
+      links: { USER_URI },
     } = this.props;
 
     return (
@@ -85,7 +95,57 @@ class Home extends Component {
             </p>
           ) : (
             <>
-              <h1>TODO</h1>
+              <p>
+                <FormattedMessage
+                  id="app.homepage.about"
+                  defaultMessage="This ReCodEx extension handles data integration and exchange between ReCodEx and Charles University Student Information System (SIS). Please choose one of the pages below."
+                />
+              </p>
+
+              <hr className="my-4" />
+
+              <Row className="mb-4">
+                <Col xs={false} sm="auto">
+                  <h3>
+                    <UserProfileIcon gapLeft={2} gapRight={2} fixedWidth className="text-body-secondary" />
+                  </h3>
+                </Col>
+                <Col xs={12} sm>
+                  <h3>
+                    <Link to={USER_URI} className="link-body-emphasis">
+                      <FormattedMessage id="app.sidebar.menu.user" defaultMessage="Personal Data" />
+                      <LinkIcon gapLeft={3} />
+                    </Link>
+                  </h3>
+
+                  <p>
+                    <FormattedMessage
+                      id="app.homepage.userPage"
+                      defaultMessage="The personal data integration page allows updating ReCodEx user profile (name, titles, email) using data from SIS."
+                    />
+                  </p>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col xs={false} sm="auto">
+                  <h3>
+                    <Icon icon="person-digging" gapLeft={2} gapRight={2} fixedWidth className="text-body-secondary" />
+                  </h3>
+                </Col>
+                <Col xs={12} sm>
+                  <h3>
+                    <FormattedMessage id="app.homepage.workInProgress" defaultMessage="More features comming..." />
+                  </h3>
+
+                  <p>
+                    <FormattedMessage
+                      id="app.homepage.workInProgressDescription"
+                      defaultMessage="More features are being prepared, most notably the group integration which is currently embedded directly in ReCodEx."
+                    />
+                  </p>
+                </Col>
+              </Row>
             </>
           )}
         </div>
