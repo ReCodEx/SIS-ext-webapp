@@ -116,6 +116,8 @@
   "app.user.sisUserLoadedCallout": "Data ze SISu byla úspěšně načtena.",
   "app.user.syncButton": "Přepsat ReCodEx daty ze SISu",
   "app.user.title": "Osobní údaje",
+  "app.user.userSyncFailedCallout": "Synchronizace uživatele selhala. Prosím, znovu načťete stránku a opakujte akci později.",
+  "app.user.userUpdatedCallout": "Uživatelská data v ReCodExu byla úspěšně aktualizována daty ze SISu.",
   "app.userName.externalIds": "Externí identifikátory",
   "app.userName.externalIdsClickInfo": "klikutím zkopírujete ID do schránky",
   "app.userName.userDeactivated": "Uživatelský účet byl deaktivován. Uživatel se nemůže přihlásit.",

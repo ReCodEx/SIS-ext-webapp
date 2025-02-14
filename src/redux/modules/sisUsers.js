@@ -3,20 +3,18 @@ import { handleActions } from 'redux-actions';
 
 import factory, {
   initialState,
-  // createRecord,
-  // resourceStatus,
-  createActionsWithPostfixes,
   getJsData,
   isLoading,
   defaultNeedsRefetching,
+  createRecord,
+  resourceStatus,
 } from '../helpers/resourceManager';
 import { defaultSelectorFactory } from '../helpers/resourceManager/utils.js';
 import { createApiAction } from '../middleware/apiMiddleware.js';
 
-export const additionalActionTypes = {
-  // createActionsWithPostfixes generates all 4 constants for async operations
-  ...createActionsWithPostfixes('FETCH_BY_IDS', 'siscodex/users'),
-};
+import { additionalActionTypes as userActionTypes } from './users.js';
+
+export const additionalActionTypes = {};
 
 const resourceName = 'sisUsers';
 const apiEndpointFactory = id => `/users/${id}/sisuser`;
@@ -60,7 +58,11 @@ export const fetchSisUserIfNeeded =
 
 const reducer = handleActions(
   Object.assign({}, reduceActions, {
-    //
+    [userActionTypes.SYNC_FULFILLED]: (state, { payload: { sisUser }, meta: { id } }) =>
+      state.setIn(
+        ['resources', id],
+        createRecord({ state: resourceStatus.FULFILLED, data: { sisUser, updated: false, failed: false } })
+      ),
   }),
   initialState
 );

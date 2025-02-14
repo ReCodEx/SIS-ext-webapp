@@ -7,7 +7,6 @@ import moment from 'moment';
 import { setLang } from '../../redux/modules/app.js';
 import { getLang, anyPendingFetchOperations } from '../../redux/selectors/app.js';
 import { isLoggedIn } from '../../redux/selectors/auth.js';
-import { getLoggedInUserSettings } from '../../redux/selectors/users.js';
 
 import Layout from '../../components/layout/Layout';
 import { messages } from '../../locales';
@@ -69,12 +68,7 @@ class LayoutContainer extends Component {
    * Get messages for the given language or the deafult - English
    */
 
-  getDefaultLang = () => {
-    const { userSettings } = this.props;
-    return userSettings && userSettings.defaultLanguage ? userSettings.defaultLanguage : 'en';
-  };
-
-  getMessages = lang => messages[lang] || messages[this.getDefaultLang()];
+  getMessages = lang => messages[lang] || messages.en;
 
   render() {
     const {
@@ -116,7 +110,6 @@ LayoutContainer.propTypes = {
   sidebarIsCollapsed: PropTypes.bool,
   sidebarIsOpen: PropTypes.bool,
   location: withRouterProps.location,
-  userSettings: PropTypes.object,
 };
 
 export default withRouter(
@@ -125,7 +118,6 @@ export default withRouter(
       lang: getLang(state),
       isLoggedIn: isLoggedIn(state),
       pendingFetchOperations: anyPendingFetchOperations(state),
-      userSettings: getLoggedInUserSettings(state),
     }),
     dispatch => ({
       setLang: lang => {

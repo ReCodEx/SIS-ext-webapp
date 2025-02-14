@@ -1,5 +1,4 @@
-import { handleActions } from 'redux-actions';
-import { fromJS } from 'immutable';
+import { createAction, handleActions } from 'redux-actions';
 
 import factory, {
   initialState,
@@ -7,12 +6,13 @@ import factory, {
   resourceStatus,
   createActionsWithPostfixes,
 } from '../helpers/resourceManager';
+import { createApiAction } from '../middleware/apiMiddleware.js';
 
 import { actionTypes as authActionTypes } from './authTypes.js';
 
 export const additionalActionTypes = {
-  // createActionsWithPostfixes generates all 4 constants for async operations
-  ...createActionsWithPostfixes('FETCH_BY_IDS', 'siscodex/users'),
+  ...createActionsWithPostfixes('SYNC', 'siscodex/users'),
+  RESET_SYNC: 'siscodex/users/RESET_SYNC',
 };
 
 const resourceName = 'users';
@@ -29,55 +29,43 @@ export const fetchManyEndpoint = '/users';
 export const fetchUser = actions.fetchResource;
 export const fetchUserIfNeeded = actions.fetchOneIfNeeded;
 
+export const syncUser = id =>
+  createApiAction({
+    type: additionalActionTypes.SYNC,
+    endpoint: `/users/${id}/sync`,
+    method: 'POST',
+    meta: { id },
+  });
+
+export const syncUserReset = createAction(additionalActionTypes.RESET_SYNC, id => ({ id }));
+
 /**
  * Reducer
  */
 const reducer = handleActions(
   Object.assign({}, reduceActions, {
-    [actionTypes.UPDATE_FULFILLED]: (state, { payload, meta: { id } }) =>
-      state.setIn(
-        ['resources', id, 'data'],
-        fromJS(payload.user && typeof payload.user === 'object' ? payload.user : payload)
-      ),
+    [additionalActionTypes.SYNC_PENDING]: (state, { meta: { id } }) =>
+      state
+        .setIn(['resources', id, 'syncing'], true)
+        .removeIn(['resources', id, 'updated'])
+        .removeIn(['resources', id, 'syncFailed']),
 
-    [additionalActionTypes.FETCH_BY_IDS_PENDING]: (state, { meta: { ids } }) =>
-      state.update('resources', users => {
-        ids.forEach(id => {
-          if (!users.has(id)) {
-            users = users.set(id, createRecord());
-          }
-        });
-        return users;
-      }),
+    [additionalActionTypes.SYNC_FULFILLED]: (state, { payload: { user, updated }, meta: { id } }) =>
+      state
+        .setIn(['resources', id], createRecord({ state: resourceStatus.FULFILLED, data: user }))
+        .setIn(['resources', id, 'syncing'], false)
+        .setIn(['resources', id, 'updated'], updated),
 
-    [additionalActionTypes.FETCH_BY_IDS_FULFILLED]: (state, { payload, meta: { ids } }) =>
-      state.update('resources', users => {
-        payload.forEach(user => {
-          users = users.set(user.id, createRecord({ state: resourceStatus.FULFILLED, data: user }));
-        });
-        // in case some of the users were not returned in payload
-        ids.forEach(id => {
-          if (users.has(id) && users.getIn([id, 'data'], null) === null) {
-            users = users.delete(id);
-          }
-        });
-        return users;
-      }),
-
-    [additionalActionTypes.FETCH_BY_IDS_REJECTED]: (state, { meta: { ids } }) =>
-      state.update('resources', users => {
-        ids.forEach(id => {
-          if (users.has(id) && users.getIn([id, 'data'], null) === null) {
-            users = users.delete(id);
-          }
-        });
-        return users;
-      }),
+    [additionalActionTypes.SYNC_REJECTED]: (state, { meta: { id } }) =>
+      state.setIn(['resources', id, 'syncing'], false).setIn(['resources', id, 'syncFailed'], true),
 
     [authActionTypes.LOGIN_FULFILLED]: (state, { payload: { user } }) =>
       user && user.id
         ? state.setIn(['resources', user.id], createRecord({ state: resourceStatus.FULFILLED, data: user }))
         : state,
+
+    [additionalActionTypes.RESET_SYNC]: (state, { payload: { id } }) =>
+      state.setIn(['resources', id, 'updated'], false).setIn(['resources', id, 'syncFailed'], false),
   }),
   initialState
 );

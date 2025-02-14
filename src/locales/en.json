@@ -116,6 +116,8 @@
   "app.user.sisUserLoadedCallout": "The SIS user data were successfully (re)loaded.",
   "app.user.syncButton": "Overwrite ReCodEx with SIS Data",
   "app.user.title": "Personal Data",
+  "app.user.userSyncFailedCallout": "User sync operation failed. Reload the page and try again later.",
+  "app.user.userUpdatedCallout": "The ReCodEx user data were successfully updated by current SIS data.",
   "app.userName.externalIds": "External identifiers",
   "app.userName.externalIdsClickInfo": "click to copy the ID(s) to clipboard",
   "app.userName.userDeactivated": "The user account was deactivated. The user may not sign in.",

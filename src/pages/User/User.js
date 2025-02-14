@@ -11,9 +11,9 @@ import Box from '../../components/widgets/Box';
 import DateTime from '../../components/widgets/DateTime';
 import Button, { TheButtonGroup } from '../../components/widgets/TheButton';
 import Icon, { LoadingIcon, RefreshIcon, UserProfileIcon, WarningIcon } from '../../components/icons';
-import { fetchUserIfNeeded } from '../../redux/modules/users.js';
+import { fetchUserIfNeeded, syncUser, syncUserReset } from '../../redux/modules/users.js';
 import { fetchSisUser, fetchSisUserIfNeeded } from '../../redux/modules/sisUsers.js';
-import { loggedInUserSelector } from '../../redux/selectors/users.js';
+import { loggedInUserSelector, isUserSyncing, isUserUpdated, isUserSyncFailed } from '../../redux/selectors/users.js';
 import { loggedInSisUserSelector } from '../../redux/selectors/sisUsers.js';
 import { isLoading, hasFailed, getJsData } from '../../redux/helpers/resourceManager';
 
@@ -83,7 +83,16 @@ class User extends Component {
     Promise.all([dispatch(fetchUserIfNeeded(userId)), dispatch(fetchSisUserIfNeeded(userId, 30))]);
 
   render() {
-    const { loggedInUser, loggedInSisUser, fetchSisUser } = this.props;
+    const {
+      loggedInUser,
+      loggedInSisUser,
+      fetchSisUser,
+      syncUser,
+      syncReset,
+      isUserSyncing = false,
+      isUserUpdated = false,
+      isUserSyncFailed = false,
+    } = this.props;
     const sisUserData = getJsData(loggedInSisUser)?.sisUser;
     const sisUserUpdated = Boolean(getJsData(loggedInSisUser)?.updated);
     const sisUserUpdateFailed = Boolean(getJsData(loggedInSisUser)?.failed);
@@ -108,6 +117,23 @@ class User extends Component {
               {sisUserUpdateFailed && (
                 <Callout variant="danger">
                   <FormattedMessage id="app.user.sisUserFailedCallout" defaultMessage="SIS data (re)loading failed." />
+                </Callout>
+              )}
+
+              {isUserUpdated && (
+                <Callout variant="success">
+                  <FormattedMessage
+                    id="app.user.userUpdatedCallout"
+                    defaultMessage="The ReCodEx user data were successfully updated by current SIS data."
+                  />
+                </Callout>
+              )}
+              {isUserSyncFailed && (
+                <Callout variant="danger">
+                  <FormattedMessage
+                    id="app.user.userSyncFailedCallout"
+                    defaultMessage="User sync operation failed. Reload the page and try again later."
+                  />
                 </Callout>
               )}
 
@@ -189,16 +215,22 @@ class User extends Component {
 
               <div className="text-center">
                 <TheButtonGroup>
-                  {Object.values(diffIndex).some(v => v) && (
-                    <Button variant="success">
-                      <Icon icon="left-long" gapRight />
+                  {(isUserSyncing || Object.values(diffIndex).some(v => v)) && (
+                    <Button
+                      variant={isUserSyncFailed ? 'danger' : 'success'}
+                      disabled={isUserSyncing}
+                      onClick={() => syncUser(user.id)}>
+                      {isUserSyncing ? <LoadingIcon gapRight /> : <Icon icon="left-long" gapRight />}
                       <FormattedMessage id="app.user.syncButton" defaultMessage="Overwrite ReCodEx with SIS Data" />
                     </Button>
                   )}
                   <Button
                     variant={sisUserUpdateFailed ? 'danger' : 'primary'}
                     disabled={isLoading(loggedInSisUser)}
-                    onClick={() => fetchSisUser(user.id, 0)}>
+                    onClick={() => {
+                      syncReset(user.id);
+                      return fetchSisUser(user.id, 0);
+                    }}>
                     {isLoading(loggedInSisUser) ? <LoadingIcon gapRight /> : <RefreshIcon gapRight />}
                     <FormattedMessage id="app.user.fetchSisButton" defaultMessage="Refresh SIS Data" />
                   </Button>
@@ -215,19 +247,32 @@ class User extends Component {
 User.propTypes = {
   loggedInUser: ImmutablePropTypes.map,
   loggedInSisUser: ImmutablePropTypes.map,
+  isUserSyncing: PropTypes.bool,
+  isUserUpdated: PropTypes.bool,
+  isUserSyncFailed: PropTypes.bool,
   loadAsync: PropTypes.func.isRequired,
   fetchSisUser: PropTypes.func.isRequired,
   fetchSisUserIfNeeded: PropTypes.func.isRequired,
+  syncUser: PropTypes.func.isRequired,
+  syncReset: PropTypes.func.isRequired,
 };
 
 export default connect(
-  state => ({
-    loggedInUser: loggedInUserSelector(state),
-    loggedInSisUser: loggedInSisUserSelector(state),
-  }),
+  state => {
+    const loggedInUser = loggedInUserSelector(state);
+    return {
+      loggedInUser,
+      loggedInSisUser: loggedInSisUserSelector(state),
+      isUserSyncing: isUserSyncing(state, loggedInUser && loggedInUser.getIn(['data', 'id'], '')),
+      isUserUpdated: isUserUpdated(state, loggedInUser && loggedInUser.getIn(['data', 'id'], '')),
+      isUserSyncFailed: isUserSyncFailed(state, loggedInUser && loggedInUser.getIn(['data', 'id'], '')),
+    };
+  },
   dispatch => ({
     loadAsync: userId => User.loadAsync({ userId }, dispatch),
     fetchSisUser: (userId, expiration = null) => dispatch(fetchSisUser(userId, expiration)),
     fetchSisUserIfNeeded: (userId, expiration = null) => dispatch(fetchSisUserIfNeeded(userId, expiration)),
+    syncUser: userId => dispatch(syncUser(userId)),
+    syncReset: userId => dispatch(syncUserReset(userId)),
   })
 )(User);
