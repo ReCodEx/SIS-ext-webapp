@@ -74,7 +74,7 @@ const Sidebar = ({ pendingFetchOperations, loggedInUser, currentUrl, links: { HO
                 </>
               ) : (
                 <MenuItem
-                  title={<FormattedMessage id="app.sidebar.menu.return" defaultMessage="Back to ReCodEx" />}
+                  title={<FormattedMessage id="app.backToReCodEx" defaultMessage="Back to ReCodEx" />}
                   icon="person-walking-arrow-loop-left"
                   link={getReturnUrl()}
                 />

@@ -48,13 +48,18 @@ const reducer = handleActions(
       state
         .setIn(['resources', id, 'syncing'], true)
         .removeIn(['resources', id, 'updated'])
+        .removeIn(['resources', id, 'syncCanceled'])
         .removeIn(['resources', id, 'syncFailed']),
 
-    [additionalActionTypes.SYNC_FULFILLED]: (state, { payload: { user, updated }, meta: { id } }) =>
+    [additionalActionTypes.SYNC_FULFILLED]: (
+      state,
+      { payload: { user, updated = false, canceled = false }, meta: { id } }
+    ) =>
       state
         .setIn(['resources', id], createRecord({ state: resourceStatus.FULFILLED, data: user }))
         .setIn(['resources', id, 'syncing'], false)
-        .setIn(['resources', id, 'updated'], updated),
+        .setIn(['resources', id, 'updated'], updated)
+        .setIn(['resources', id, 'syncCanceled'], canceled),
 
     [additionalActionTypes.SYNC_REJECTED]: (state, { meta: { id } }) =>
       state.setIn(['resources', id, 'syncing'], false).setIn(['resources', id, 'syncFailed'], true),

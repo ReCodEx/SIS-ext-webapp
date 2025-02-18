@@ -13,7 +13,13 @@ import Button, { TheButtonGroup } from '../../components/widgets/TheButton';
 import Icon, { LoadingIcon, RefreshIcon, UserProfileIcon, WarningIcon } from '../../components/icons';
 import { fetchUserIfNeeded, syncUser, syncUserReset } from '../../redux/modules/users.js';
 import { fetchSisUser, fetchSisUserIfNeeded } from '../../redux/modules/sisUsers.js';
-import { loggedInUserSelector, isUserSyncing, isUserUpdated, isUserSyncFailed } from '../../redux/selectors/users.js';
+import {
+  loggedInUserSelector,
+  isUserSyncing,
+  isUserUpdated,
+  isUserSyncFailed,
+  isUserSyncCanceled,
+} from '../../redux/selectors/users.js';
 import { loggedInSisUserSelector } from '../../redux/selectors/sisUsers.js';
 import { isLoading, hasFailed, getJsData } from '../../redux/helpers/resourceManager';
 
@@ -91,6 +97,7 @@ class User extends Component {
       syncReset,
       isUserSyncing = false,
       isUserUpdated = false,
+      isUserSyncCanceled = false,
       isUserSyncFailed = false,
     } = this.props;
     const sisUserData = getJsData(loggedInSisUser)?.sisUser;
@@ -128,6 +135,16 @@ class User extends Component {
                   />
                 </Callout>
               )}
+
+              {isUserSyncCanceled && (
+                <Callout variant="warning">
+                  <FormattedMessage
+                    id="app.user.userSyncCanceledCallout"
+                    defaultMessage="User sync operation was canceled, because the ReCodEx profile data were outdated and needed to be reloaded. Please, re-start the operation if it is still desired."
+                  />
+                </Callout>
+              )}
+
               {isUserSyncFailed && (
                 <Callout variant="danger">
                   <FormattedMessage
@@ -221,7 +238,10 @@ class User extends Component {
                       disabled={isUserSyncing}
                       onClick={() => syncUser(user.id)}>
                       {isUserSyncing ? <LoadingIcon gapRight /> : <Icon icon="left-long" gapRight />}
-                      <FormattedMessage id="app.user.syncButton" defaultMessage="Overwrite ReCodEx with SIS Data" />
+                      <FormattedMessage
+                        id="app.user.syncButton"
+                        defaultMessage="Update ReCodEx profile with data from SIS"
+                      />
                     </Button>
                   )}
                   <Button
@@ -232,7 +252,7 @@ class User extends Component {
                       return fetchSisUser(user.id, 0);
                     }}>
                     {isLoading(loggedInSisUser) ? <LoadingIcon gapRight /> : <RefreshIcon gapRight />}
-                    <FormattedMessage id="app.user.fetchSisButton" defaultMessage="Refresh SIS Data" />
+                    <FormattedMessage id="app.user.fetchSisButton" defaultMessage="Reload SIS data" />
                   </Button>
                 </TheButtonGroup>
               </div>
@@ -249,6 +269,7 @@ User.propTypes = {
   loggedInSisUser: ImmutablePropTypes.map,
   isUserSyncing: PropTypes.bool,
   isUserUpdated: PropTypes.bool,
+  isUserSyncCanceled: PropTypes.bool,
   isUserSyncFailed: PropTypes.bool,
   loadAsync: PropTypes.func.isRequired,
   fetchSisUser: PropTypes.func.isRequired,
@@ -265,6 +286,7 @@ export default connect(
       loggedInSisUser: loggedInSisUserSelector(state),
       isUserSyncing: isUserSyncing(state, loggedInUser && loggedInUser.getIn(['data', 'id'], '')),
       isUserUpdated: isUserUpdated(state, loggedInUser && loggedInUser.getIn(['data', 'id'], '')),
+      isUserSyncCanceled: isUserSyncCanceled(state, loggedInUser && loggedInUser.getIn(['data', 'id'], '')),
       isUserSyncFailed: isUserSyncFailed(state, loggedInUser && loggedInUser.getIn(['data', 'id'], '')),
     };
   },

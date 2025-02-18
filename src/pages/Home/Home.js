@@ -18,7 +18,7 @@ import Icon, {
 import Callout from '../../components/widgets/Callout';
 
 import { setLang } from '../../redux/modules/app.js';
-import { login } from '../../redux/modules/auth.js';
+import { login, logout } from '../../redux/modules/auth.js';
 
 import { getReturnUrl, setReturnUrl } from '../../helpers/localStorage.js';
 import { knownLocalesNames } from '../../helpers/localizedData.js';
@@ -146,6 +146,50 @@ class Home extends Component {
                   </p>
                 </Col>
               </Row>
+
+              <hr className="my-4" />
+
+              <Row>
+                <Col xs={false} sm="auto">
+                  <h3>
+                    <Icon
+                      icon="person-walking-arrow-loop-left"
+                      gapLeft={2}
+                      gapRight={2}
+                      fixedWidth
+                      className="text-body-secondary"
+                    />
+                  </h3>
+                </Col>
+                <Col xs={12} sm>
+                  <h3>
+                    <Link
+                      to={USER_URI}
+                      className="link-body-emphasis"
+                      onClick={e => {
+                        e.preventDefault();
+                        logout();
+
+                        // let's go back to ReCodEx after the logout...
+                        const url = getReturnUrl();
+                        if (url && window) {
+                          setReturnUrl(null);
+                          window.location.assign(url);
+                        }
+                      }}>
+                      <FormattedMessage id="app.backToReCodEx" defaultMessage="Back to ReCodEx" />
+                      <LinkIcon gapLeft={3} />
+                    </Link>
+                  </h3>
+
+                  <p>
+                    <FormattedMessage
+                      id="app.homepage.backToReCodExDescription"
+                      defaultMessage="And logout from SIS-CodEx session."
+                    />
+                  </p>
+                </Col>
+              </Row>
             </>
           )}
         </div>
@@ -171,5 +215,6 @@ export default connect(
   dispatch => ({
     setLang: lang => dispatch(setLang(lang)),
     login: token => dispatch(login(token)),
+    logout: () => dispatch(logout()),
   })
 )(injectIntl(withLinks(Home)));

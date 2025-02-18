@@ -1,3 +1,5 @@
 [
-  "app.roles.student"
+  "app.roles.student",
+  "app.user.diffBox.email",
+  "app.user.diffBox.login"
 ]

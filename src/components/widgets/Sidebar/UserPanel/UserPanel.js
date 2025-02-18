@@ -48,7 +48,7 @@ class UserPanel extends Component {
                 }}>
                 <ReturnIcon className="text-danger sidebar-up-collapse-gaps" gapRight />
                 <span className="sidebar-up-hide-collapsed">
-                  <FormattedMessage id="app.logout" defaultMessage="Logout" />
+                  <FormattedMessage id="app.backToReCodEx" defaultMessage="Back to ReCodEx" />
                 </span>
               </a>
             </OverlayTrigger>

@@ -41,6 +41,9 @@ export const isUserSyncing = createSelector([usersSelector, getParam], (users, i
 export const isUserUpdated = createSelector([usersSelector, getParam], (users, id) =>
   users.getIn([id, 'updated'], false)
 );
+export const isUserSyncCanceled = createSelector([usersSelector, getParam], (users, id) =>
+  users.getIn([id, 'syncCanceled'], false)
+);
 export const isUserSyncFailed = createSelector([usersSelector, getParam], (users, id) =>
-  users.getIn([id, 'syncFailed', false])
+  users.getIn([id, 'syncFailed'], false)
 );
