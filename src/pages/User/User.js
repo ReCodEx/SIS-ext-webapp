@@ -31,7 +31,7 @@ const comparedProperties = [
     id: 'login',
     key: ['sisLogin'],
     sisKey: ['login'],
-    caption: <FormattedMessage id="app.user.diffBox.login" defaultMessage="Login" />,
+    caption: <FormattedMessage id="app.user.diffBox.login" defaultMessage="LDAP ID (SIS/CAS login)" />,
   },
   {
     id: 'titlesBeforeName',
@@ -236,6 +236,15 @@ class User extends Component {
                     <Button
                       variant={isUserSyncFailed ? 'danger' : 'success'}
                       disabled={isUserSyncing}
+                      confirm={
+                        diffIndex.email ? (
+                          <FormattedMessage
+                            id="app.user.syncButtonConfirmEmail"
+                            defaultMessage="You are about to update your e-mail address so you will be required to verify it afterwards in ReCodEx. The e-mail address is also used as your local login if you already have local account (yout local password will not be changed)."
+                          />
+                        ) : null
+                      }
+                      confirmId="email-sync-confirm"
                       onClick={() => syncUser(user.id)}>
                       {isUserSyncing ? <LoadingIcon gapRight /> : <Icon icon="left-long" gapRight />}
                       <FormattedMessage
