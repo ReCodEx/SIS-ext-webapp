@@ -137,6 +137,7 @@ export const SupervisorIcon = props => <Icon {...props} icon="user-graduate" />;
 export const SupervisorStudentIcon = props => <Icon {...props} icon="chalkboard-teacher" />;
 export const SwapIcon = props => <Icon {...props} icon="sync" />;
 export const TagIcon = props => <Icon {...props} icon="tag" />;
+export const TermIcon = props => <Icon {...props} icon={['far', 'calendar-days']} />;
 export const TestsIcon = props => <Icon {...props} icon="cogs" />;
 export const TransferIcon = props => <Icon {...props} icon="exchange-alt" />;
 

@@ -75,7 +75,7 @@ class ResourceRenderer extends Component {
     return this.returnAsArray() ? ready(this.oldData) : ready(...this.oldData);
   };
 
-  // Perform rendering of the childs whilst keeping resource data cached ...
+  // Perform rendering of the children whilst keeping resource data cached ...
   renderReady = resources => {
     if (this.oldResources === null || !shallowResourcesEqual(this.oldResources, resources)) {
       this.oldData = resources

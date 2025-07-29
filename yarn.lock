@@ -1560,6 +1560,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.10.0, @babel/runtime@npm:^7.15.4":
+  version: 7.28.2
+  resolution: "@babel/runtime@npm:7.28.2"
+  checksum: 8673eb2311752929f5b0167f42cff4cc1d5fadddd0394baca27d06c1618680ffcf95e9f01061f5c4dc3f6a32b6bbf500e7762c02dc22bcd273c2947b9774ddad
+  languageName: node
+  linkType: hard
+
 "@babel/runtime@npm:^7.24.7, @babel/runtime@npm:^7.26.0":
   version: 7.26.0
   resolution: "@babel/runtime@npm:7.26.0"
@@ -7679,6 +7686,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"final-form@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "final-form@npm:5.0.0"
+  dependencies:
+    "@babel/runtime": ^7.10.0
+  checksum: 25d197b4615411641a6faffbd6da21bfda483f4288404ec98131f5c779b3449b216dc61b08f9562a318efb3e81a5c7334ee62b5a6b36075a5c5b2d715d8e41f6
+  languageName: node
+  linkType: hard
+
 "finalhandler@npm:1.3.1":
   version: 1.3.1
   resolution: "finalhandler@npm:1.3.1"
@@ -12574,6 +12590,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-final-form@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "react-final-form@npm:7.0.0"
+  dependencies:
+    "@babel/runtime": ^7.15.4
+  peerDependencies:
+    final-form: ^5.0.0
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: bf9982ad5c17927bc2100f4b979dc93c0539fd208c078a7ee3f72237cbf7e81be5466fd72c3e0472a3d87776a7b3a086f61bc879381082004393e16b86e115fd
+  languageName: node
+  linkType: hard
+
 "react-height@npm:^3.0.2":
   version: 3.0.2
   resolution: "react-height@npm:3.0.2"
@@ -12897,6 +12925,7 @@ __metadata:
     fetch-mock: ^12.2.0
     file-loader: ^6.2.0
     file-saver: ^2.0.5
+    final-form: ^5.0.0
     flat: ^6.0.1
     font-awesome-animation: ^1.1.1
     git-revision-webpack-plugin: ^5.0.0
@@ -12932,6 +12961,7 @@ __metadata:
     react-diff-viewer: ^3.1.1
     react-dom: ^19.0.0
     react-dropzone: ^14.3.5
+    react-final-form: ^7.0.0
     react-height: ^3.0.2
     react-helmet: ^6.1.0
     react-immutable-proptypes: ^2.2.0
