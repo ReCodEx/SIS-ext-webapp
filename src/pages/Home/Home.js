@@ -73,7 +73,9 @@ class Home extends Component {
   }
 
   componentDidUpdate() {
-    this.props.loadAsync(this.props.loggedInUserId);
+    if (this.props.loggedInUserId) {
+      this.props.loadAsync(this.props.loggedInUserId);
+    }
   }
 
   render() {
