@@ -5,7 +5,7 @@ import { FormattedMessage } from 'react-intl';
 
 import Button from '../../widgets/TheButton';
 import OptionalTooltipWrapper from '../../widgets/OptionalTooltipWrapper';
-import Confirm from '../../forms/Confirm';
+import Confirm from '../../widgets/Confirm';
 import { isReady, isLoading, isDeleting, isDeleted } from '../../../redux/helpers/resourceManager';
 import { DeleteIcon, FailureIcon, LoadingIcon, SuccessIcon } from '../../icons';
 

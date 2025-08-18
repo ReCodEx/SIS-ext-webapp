@@ -1,5 +1,4 @@
 import { combineReducers } from 'redux';
-import { reducer as formReducer } from 'redux-form';
 
 import app from './modules/app.js';
 import auth, { actionTypes as authActionTypes } from './modules/auth.js';
@@ -17,12 +16,8 @@ const createRecodexReducers = (token, lang) => ({
   users,
 });
 
-const librariesReducers = {
-  form: formReducer,
-};
-
 const createReducer = (token, lang) => {
-  const appReducer = combineReducers(Object.assign({}, librariesReducers, createRecodexReducers(token, lang)));
+  const appReducer = combineReducers(Object.assign({}, createRecodexReducers(token, lang)));
 
   return (state, action) => {
     if (action.type === authActionTypes.LOGOUT) {
