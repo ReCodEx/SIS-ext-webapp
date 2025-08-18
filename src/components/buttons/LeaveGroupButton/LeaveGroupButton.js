@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { FormattedMessage } from 'react-intl';
 import Button from '../../widgets/TheButton';
 import Icon from '../../icons';
-import Confirm from '../../forms/Confirm';
+import Confirm from '../../widgets/Confirm';
 
 const LeaveGroupButton = ({ onClick, ...props }) => (
   <Confirm

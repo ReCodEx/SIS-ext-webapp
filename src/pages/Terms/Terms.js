@@ -11,19 +11,23 @@ import Box from '../../components/widgets/Box';
 import DateTime from '../../components/widgets/DateTime';
 import Button, { TheButtonGroup } from '../../components/widgets/TheButton';
 import { DeleteIcon, EditIcon, RefreshIcon, TermIcon } from '../../components/icons';
-import Callout from '../../components/widgets/Callout';
 import ResourceRenderer from '../../components/helpers/ResourceRenderer';
 
-import { fetchUserIfNeeded, syncUser, syncUserReset } from '../../redux/modules/users.js';
+import { fetchUserIfNeeded } from '../../redux/modules/users.js';
 import { fetchAllTerms, fetchTerm, createTerm, updateTerm, deleteTerm } from '../../redux/modules/terms.js';
 import { addNotification } from '../../redux/modules/notifications.js';
 import { loggedInUserSelector } from '../../redux/selectors/users.js';
-import { isLoading, hasFailed, getJsData } from '../../redux/helpers/resourceManager';
 import { loggedInUserIdSelector } from '../../redux/selectors/auth.js';
 import { termsSelector } from '../../redux/selectors/terms.js';
 
 import { isSuperadminRole, isStudentRole, isSupervisorRole } from '../../components/helpers/usersRoles.js';
-import { safeGet } from '../../helpers/common.js';
+import EditTermForm from '../../components/forms/EditTermForm/EditTermForm.js';
+
+const getTermInitialValues = lruMemoize((terms, id = null) => {
+  // const term = id && terms.find(t => t.id === id);
+  // { year, term, beginning, end, studentsFrom, studentsUntil, teachersFrom, teachersUntil, archiveAfter }
+  return null;
+});
 
 class Terms extends Component {
   state = {
@@ -48,6 +52,11 @@ class Terms extends Component {
       this.props.loadAsync(this.props.loggedInUserId);
     }
   }
+
+  formSubmit = values => {
+    console.log(values);
+    this.closeModal();
+  };
 
   static loadAsync = ({ userId }, dispatch) =>
     Promise.all([dispatch(fetchUserIfNeeded(userId)), dispatch(fetchAllTerms())]);
@@ -88,176 +97,206 @@ class Terms extends Component {
                   )
                 }>
                 <ResourceRenderer resourceArray={terms}>
-                  {terms =>
-                    terms && terms.length > 0 ? (
-                      <Table hover striped className="mb-0">
-                        <thead>
-                          <tr>
-                            <th>
-                              <FormattedMessage id="app.terms.table.term" defaultMessage="Term" />
-                            </th>
-                            <th>
-                              <FormattedMessage id="app.terms.table.beginning" defaultMessage="Beginning" />
-                            </th>
-                            <th>
-                              <FormattedMessage id="app.terms.table.end" defaultMessage="End" />
-                            </th>
-
-                            {(isStudentRole(user.role) || isSuperadminRole(user.role)) && (
-                              <>
-                                <th>
-                                  <FormattedMessage id="app.terms.table.studentsFrom" defaultMessage="Students from" />
-                                </th>
-                                <th>
-                                  <FormattedMessage
-                                    id="app.terms.table.studentsUntil"
-                                    defaultMessage="Students until"
-                                  />
-                                </th>
-                              </>
-                            )}
-
-                            {(isSupervisorRole(user.role) || isSuperadminRole(user.role)) && (
-                              <>
-                                <th>
-                                  <FormattedMessage id="app.terms.table.teachersFrom" defaultMessage="Teachers from" />
-                                </th>
-                                <th>
-                                  <FormattedMessage
-                                    id="app.terms.table.teachersUntil"
-                                    defaultMessage="Teachers until"
-                                  />
-                                </th>
-                              </>
-                            )}
-
-                            {isSuperadminRole(user.role) && (
-                              <>
-                                <th>
-                                  <FormattedMessage id="app.terms.table.Archive after" defaultMessage="Archive after" />
-                                </th>
-                                <th />
-                              </>
-                            )}
-                          </tr>
-                        </thead>
-
-                        <tbody>
-                          {terms.map((term, idx) => (
-                            <tr key={term.id || idx} className="align-middle">
-                              <td className="text-nowrap">
-                                {term.year}-{term.term} (
-                                {term.term === 1 ? (
-                                  <FormattedMessage id="app.terms.table.winter" defaultMessage="Winter" />
-                                ) : (
-                                  <FormattedMessage id="app.terms.table.summer" defaultMessage="Summer" />
-                                )}
-                                )
-                              </td>
-                              <td className="text-nowrap">
-                                {term.beginning ? <DateTime unixts={term.beginning} showTime={false} /> : <>&mdash;</>}
-                              </td>
-                              <td className="text-nowrap">
-                                {term.end ? <DateTime unixts={term.end} showTime={false} /> : <>&mdash;</>}
-                              </td>
+                  {terms => (
+                    <>
+                      {terms && terms.length > 0 ? (
+                        <Table hover striped className="mb-0">
+                          <thead>
+                            <tr>
+                              <th>
+                                <FormattedMessage id="app.terms.table.term" defaultMessage="Term" />
+                              </th>
+                              <th>
+                                <FormattedMessage id="app.terms.table.beginning" defaultMessage="Beginning" />
+                              </th>
+                              <th>
+                                <FormattedMessage id="app.terms.table.end" defaultMessage="End" />
+                              </th>
 
                               {(isStudentRole(user.role) || isSuperadminRole(user.role)) && (
                                 <>
-                                  <td className="text-nowrap">
-                                    {term.studentsFrom ? (
-                                      <DateTime unixts={term.studentsFrom} showTime={false} />
-                                    ) : (
-                                      <>&mdash;</>
-                                    )}
-                                  </td>
-                                  <td className="text-nowrap">
-                                    {term.studentsUntil ? (
-                                      <DateTime unixts={term.studentsUntil} showTime={false} />
-                                    ) : (
-                                      <>&mdash;</>
-                                    )}
-                                  </td>
+                                  <th>
+                                    <FormattedMessage
+                                      id="app.terms.table.studentsFrom"
+                                      defaultMessage="Students from"
+                                    />
+                                  </th>
+                                  <th>
+                                    <FormattedMessage
+                                      id="app.terms.table.studentsUntil"
+                                      defaultMessage="Students until"
+                                    />
+                                  </th>
                                 </>
                               )}
 
                               {(isSupervisorRole(user.role) || isSuperadminRole(user.role)) && (
                                 <>
-                                  <td className="text-nowrap">
-                                    {term.teachersFrom ? (
-                                      <DateTime unixts={term.teachersFrom} showTime={false} />
-                                    ) : (
-                                      <>&mdash;</>
-                                    )}
-                                  </td>
-                                  <td className="text-nowrap">
-                                    {term.teachersUntil ? (
-                                      <DateTime unixts={term.teachersUntil} showTime={false} />
-                                    ) : (
-                                      <>&mdash;</>
-                                    )}
-                                  </td>
+                                  <th>
+                                    <FormattedMessage
+                                      id="app.terms.table.teachersFrom"
+                                      defaultMessage="Teachers from"
+                                    />
+                                  </th>
+                                  <th>
+                                    <FormattedMessage
+                                      id="app.terms.table.teachersUntil"
+                                      defaultMessage="Teachers until"
+                                    />
+                                  </th>
                                 </>
                               )}
 
                               {isSuperadminRole(user.role) && (
                                 <>
-                                  <td className="text-nowrap">
-                                    {term.archiveAfter ? (
-                                      <DateTime unixts={term.archiveAfter} showTime={false} />
-                                    ) : (
-                                      <>&mdash;</>
-                                    )}
-                                    {term.permissionHints}
-                                  </td>
-                                  <td className="text-nowrap shrink-col">
-                                    <TheButtonGroup>
-                                      <Button variant="warning" size="sm" onClick={() => this.openModal(term.id)}>
-                                        <EditIcon gapRight />
-                                        <FormattedMessage id="app.terms.table.editButton" defaultMessage="Edit" />
-                                      </Button>
-                                      <Button
-                                        variant="danger"
-                                        size="sm"
-                                        confirmId={`delete-term-${term.id}`}
-                                        confirm={
-                                          <FormattedMessage
-                                            id="app.terms.table.deleteConfirm"
-                                            defaultMessage="Are you sure you want to delete this term?"
-                                          />
-                                        }
-                                        onClick={() => deleteTerm(term.id)}>
-                                        <DeleteIcon gapRight />
-                                        <FormattedMessage id="app.terms.table.deleteButton" defaultMessage="Delete" />
-                                      </Button>
-                                    </TheButtonGroup>
-                                  </td>
+                                  <th>
+                                    <FormattedMessage
+                                      id="app.terms.table.Archive after"
+                                      defaultMessage="Archive after"
+                                    />
+                                  </th>
+                                  <th />
                                 </>
                               )}
                             </tr>
-                          ))}
-                        </tbody>
-                      </Table>
-                    ) : (
-                      <div className="text-center text-muted p-3 opacity-50">
-                        <FormattedMessage id="app.terms.noTerms" defaultMessage="No terms were created yet..." />
-                      </div>
-                    )
-                  }
+                          </thead>
+
+                          <tbody>
+                            {terms.map((term, idx) => (
+                              <tr key={term.id || idx} className="align-middle">
+                                <td className="text-nowrap">
+                                  {term.year}-{term.term} (
+                                  {term.term === 1 ? (
+                                    <FormattedMessage id="app.terms.table.winter" defaultMessage="Winter" />
+                                  ) : (
+                                    <FormattedMessage id="app.terms.table.summer" defaultMessage="Summer" />
+                                  )}
+                                  )
+                                </td>
+                                <td className="text-nowrap">
+                                  {term.beginning ? (
+                                    <DateTime unixts={term.beginning} showTime={false} />
+                                  ) : (
+                                    <>&mdash;</>
+                                  )}
+                                </td>
+                                <td className="text-nowrap">
+                                  {term.end ? <DateTime unixts={term.end} showTime={false} /> : <>&mdash;</>}
+                                </td>
+
+                                {(isStudentRole(user.role) || isSuperadminRole(user.role)) && (
+                                  <>
+                                    <td className="text-nowrap">
+                                      {term.studentsFrom ? (
+                                        <DateTime unixts={term.studentsFrom} showTime={false} />
+                                      ) : (
+                                        <>&mdash;</>
+                                      )}
+                                    </td>
+                                    <td className="text-nowrap">
+                                      {term.studentsUntil ? (
+                                        <DateTime unixts={term.studentsUntil} showTime={false} />
+                                      ) : (
+                                        <>&mdash;</>
+                                      )}
+                                    </td>
+                                  </>
+                                )}
+
+                                {(isSupervisorRole(user.role) || isSuperadminRole(user.role)) && (
+                                  <>
+                                    <td className="text-nowrap">
+                                      {term.teachersFrom ? (
+                                        <DateTime unixts={term.teachersFrom} showTime={false} />
+                                      ) : (
+                                        <>&mdash;</>
+                                      )}
+                                    </td>
+                                    <td className="text-nowrap">
+                                      {term.teachersUntil ? (
+                                        <DateTime unixts={term.teachersUntil} showTime={false} />
+                                      ) : (
+                                        <>&mdash;</>
+                                      )}
+                                    </td>
+                                  </>
+                                )}
+
+                                {isSuperadminRole(user.role) && (
+                                  <>
+                                    <td className="text-nowrap">
+                                      {term.archiveAfter ? (
+                                        <DateTime unixts={term.archiveAfter} showTime={false} />
+                                      ) : (
+                                        <>&mdash;</>
+                                      )}
+                                    </td>
+                                    <td className="text-nowrap shrink-col">
+                                      <TheButtonGroup>
+                                        <Button variant="warning" size="sm" onClick={() => this.openModal(term.id)}>
+                                          <EditIcon gapRight />
+                                          <FormattedMessage id="app.terms.table.editButton" defaultMessage="Edit" />
+                                        </Button>
+                                        <Button
+                                          variant="danger"
+                                          size="sm"
+                                          confirmId={`delete-term-${term.id}`}
+                                          confirm={
+                                            <FormattedMessage
+                                              id="app.terms.table.deleteConfirm"
+                                              defaultMessage="Are you sure you want to delete this term?"
+                                            />
+                                          }
+                                          onClick={() => deleteTerm(term.id)}>
+                                          <DeleteIcon gapRight />
+                                          <FormattedMessage id="app.terms.table.deleteButton" defaultMessage="Delete" />
+                                        </Button>
+                                      </TheButtonGroup>
+                                    </td>
+                                  </>
+                                )}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </Table>
+                      ) : (
+                        <div className="text-center text-muted p-3 opacity-50">
+                          <FormattedMessage id="app.terms.noTerms" defaultMessage="No terms were created yet..." />
+                        </div>
+                      )}
+
+                      {isSuperadminRole(user.role) && (
+                        <Modal show={this.state.modalOpen} backdrop="static" size="xl" onHide={this.closeModal}>
+                          <Modal.Header closeButton>
+                            <Modal.Title>
+                              {this.state.editedTerm ? (
+                                <>
+                                  <EditIcon gapRight />
+                                  <FormattedMessage id="app.terms.editTerm" defaultMessage="Edit term" />
+                                </>
+                              ) : (
+                                <>
+                                  <TermIcon gapRight />
+                                  <FormattedMessage id="app.terms.createTerm" defaultMessage="Create new term" />
+                                </>
+                              )}
+                            </Modal.Title>
+                          </Modal.Header>
+                          <Modal.Body>
+                            <EditTermForm
+                              onSubmit={this.formSubmit}
+                              onClose={this.closeModal}
+                              create={!this.state.editedTerm}
+                              terms={terms}
+                              initialValues={getTermInitialValues(terms, this.state.editedTerm)}
+                            />
+                          </Modal.Body>
+                        </Modal>
+                      )}
+                    </>
+                  )}
                 </ResourceRenderer>
               </Box>
-
-              <Modal show={this.state.modalOpen} backdrop="static" size="xl" onHide={this.closeModal}>
-                <Modal.Header closeButton>
-                  <Modal.Title>
-                    {this.state.editedTerm ? (
-                      <FormattedMessage id="app.terms.editTerm" defaultMessage="Edit term" />
-                    ) : (
-                      <FormattedMessage id="app.terms.createTerm" defaultMessage="Create new term" />
-                    )}
-                  </Modal.Title>
-                </Modal.Header>
-                <Modal.Body>TODO - FORM</Modal.Body>
-              </Modal>
             </>
           );
         }}

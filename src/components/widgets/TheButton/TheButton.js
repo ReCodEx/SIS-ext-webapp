@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 import classnames from 'classnames';
-import Confirm from '../../forms/Confirm';
+import Confirm from '../../widgets/Confirm';
 
 const TheButtonInternal = React.forwardRef(
   ({ className, onClick = null, variant, noShadow = false, size, ...props }, ref) => (
