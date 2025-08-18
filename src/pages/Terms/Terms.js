@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import { FormattedMessage } from 'react-intl';
 import { Modal, Table } from 'react-bootstrap';
 import { lruMemoize } from 'reselect';
+import moment from 'moment';
 
 import Page from '../../components/layout/Page';
 import Box from '../../components/widgets/Box';
@@ -24,9 +25,65 @@ import { isSuperadminRole, isStudentRole, isSupervisorRole } from '../../compone
 import EditTermForm from '../../components/forms/EditTermForm/EditTermForm.js';
 
 const getTermInitialValues = lruMemoize((terms, id = null) => {
-  // const term = id && terms.find(t => t.id === id);
-  // { year, term, beginning, end, studentsFrom, studentsUntil, teachersFrom, teachersUntil, archiveAfter }
-  return null;
+  const selectedTerm = id && terms.find(t => t.id === id);
+  if (selectedTerm) {
+    // prepare existing data of a term for editing
+    const {
+      year,
+      term,
+      beginning = null,
+      end = null,
+      studentsFrom,
+      studentsUntil,
+      teachersFrom,
+      teachersUntil,
+      archiveAfter = null,
+    } = selectedTerm;
+    return {
+      year,
+      term,
+      beginning: beginning ? moment.unix(beginning) : null,
+      end: end ? moment.unix(end) : null,
+      studentsFrom: moment.unix(studentsFrom),
+      studentsUntil: moment.unix(studentsUntil),
+      teachersFrom: moment.unix(teachersFrom),
+      teachersUntil: moment.unix(teachersUntil),
+      archiveAfter: archiveAfter ? moment.unix(archiveAfter) : null,
+    };
+  } else {
+    // create new term
+    let newYear = 0;
+    let newTerm = 0;
+    terms.forEach(({ year, term }) => {
+      if (year > newYear) {
+        newYear = year;
+        newTerm = term;
+      } else if (year === newYear && term > newTerm) {
+        newTerm = term;
+      }
+    });
+
+    if (newYear === 0) {
+      // set current year as default
+      newYear = moment().year();
+      newTerm = 1;
+    } else {
+      newYear += (newTerm + 1) % 2;
+      newTerm = (newTerm % 2) + 1;
+    }
+
+    return {
+      year: newYear,
+      term: newTerm,
+      beginning: null,
+      end: null,
+      studentsFrom: moment(newTerm === 1 ? `${newYear}-10-01` : `${newYear + 1}-02-01`),
+      studentsUntil: moment(newTerm === 1 ? `${newYear + 1}-01-31` : `${newYear + 1}-05-31`),
+      teachersFrom: moment(newTerm === 1 ? `${newYear}-09-01` : `${newYear + 1}-01-01`),
+      teachersUntil: moment(newTerm === 1 ? `${newYear + 1}-02-28` : `${newYear + 1}-09-30`),
+      archiveAfter: moment(newTerm === 1 ? `${newYear + 1}-02-28` : `${newYear + 1}-09-30`),
+    };
+  }
 });
 
 class Terms extends Component {
@@ -53,9 +110,31 @@ class Terms extends Component {
     }
   }
 
-  formSubmit = values => {
-    console.log(values);
-    this.closeModal();
+  formSubmit = ({
+    year,
+    term,
+    beginning = null,
+    end = null,
+    studentsFrom,
+    studentsUntil,
+    teachersFrom,
+    teachersUntil,
+    archiveAfter = null,
+  }) => {
+    const data = {
+      year,
+      term,
+      beginning: beginning ? beginning.startOf('day').unix() : null,
+      end: end ? end.startOf('day').unix() : null,
+      studentsFrom: studentsFrom.startOf('day').unix(),
+      studentsUntil: studentsUntil.startOf('day').unix(),
+      teachersFrom: teachersFrom.startOf('day').unix(),
+      teachersUntil: teachersUntil.startOf('day').unix(),
+      archiveAfter: archiveAfter ? archiveAfter.startOf('day').unix() : null,
+    };
+
+    return Promise.resolve();
+    // this.closeModal();
   };
 
   static loadAsync = ({ userId }, dispatch) =>
