@@ -3,9 +3,8 @@ import PropTypes from 'prop-types';
 import { Form, Field, FormSpy } from 'react-final-form';
 import { FormattedMessage } from 'react-intl';
 import { Row, Col } from 'react-bootstrap';
-import moment from 'moment';
 
-import { CloseIcon, LinkIcon, RefreshIcon, SaveIcon } from '../../icons';
+import Icon, { CloseIcon, LinkIcon, LoadingIcon, RefreshIcon, SaveIcon, VisibleIcon } from '../../icons';
 import Button, { TheButtonGroup } from '../../widgets/TheButton';
 import { SelectField, NumericTextField, DatetimeField } from '../fields';
 import Explanation from '../../widgets/Explanation';
@@ -18,8 +17,13 @@ const termOptions = [
   { name: <FormattedMessage id="app.terms.form.term.summer" defaultMessage="2-Summer" />, key: 2 },
 ];
 
-const validate = lruMemoize(terms => values => {
+const validate = lruMemoize((terms, id) => values => {
   const termIndex = arrayToObject(terms, ({ year, term }) => `${year}-${term}`);
+  const selectedTerm = id && terms.find(t => t.id === id);
+  if (selectedTerm) {
+    delete termIndex[`${selectedTerm.year}-${selectedTerm.term}`];
+  }
+
   const errors = {};
 
   const yearTerm = `${values.year}-${values.term}`;
@@ -29,6 +33,34 @@ const validate = lruMemoize(terms => values => {
         id="app.terms.form.validate.termDuplicate"
         defaultMessage="Term {yearTerm} already exists."
         values={{ yearTerm }}
+      />
+    );
+  }
+
+  // beginning and end
+  const beginningTs = values.beginning?.unix();
+  const endTs = values.end?.unix();
+  if (!beginningTs && endTs) {
+    errors.beginning = (
+      <FormattedMessage
+        id="app.terms.form.validate.bothBeginningAndEnd"
+        defaultMessage="The 'beginning' and 'end' dates should be either both provided or both omitted."
+      />
+    );
+  }
+  if (beginningTs && !endTs) {
+    errors.end = (
+      <FormattedMessage
+        id="app.terms.form.validate.bothBeginningAndEnd"
+        defaultMessage="The 'beginning' and 'end' dates should be either both provided or both omitted."
+      />
+    );
+  }
+  if (beginningTs && endTs && beginningTs >= endTs) {
+    errors.end = (
+      <FormattedMessage
+        id="app.terms.form.validate.beginningAfterEnd"
+        defaultMessage="The 'end' date must be after the 'beginning' date."
       />
     );
   }
@@ -79,16 +111,31 @@ const validate = lruMemoize(terms => values => {
     );
   }
 
+  const archiveAfterTs = values.archiveAfter?.unix();
+  if (
+    archiveAfterTs &&
+    studentsUntilTs &&
+    teachersUntilTs &&
+    archiveAfterTs < Math.max(studentsUntilTs, teachersUntilTs)
+  ) {
+    errors.archiveAfter = (
+      <FormattedMessage
+        id="app.terms.form.validate.archiveAfter"
+        defaultMessage="The 'Archive After' date must be after both (student's and teacher's) visibility periods end."
+      />
+    );
+  }
+
   return errors;
 });
 
-const EditTermForm = ({ onSubmit, onClose, create = false, terms = EMPTY_ARRAY }) => {
+const EditTermForm = ({ initialValues, onSubmit, onClose, editTermId = null, create = false, terms = EMPTY_ARRAY }) => {
   return (
     <Form
       onSubmit={onSubmit}
-      initialValues={{ year: new Date().getFullYear(), term: 1, beginning: moment() }}
-      validate={validate(terms)}
-      render={({ handleSubmit }) => (
+      initialValues={initialValues}
+      validate={validate(terms, editTermId)}
+      render={({ handleSubmit, submitting, submitError }) => (
         <form onSubmit={handleSubmit}>
           <Row>
             <Col lg={6}>
@@ -128,6 +175,11 @@ const EditTermForm = ({ onSubmit, onClose, create = false, terms = EMPTY_ARRAY }
           </Row>
 
           <hr />
+
+          <h5 className="text-secondary mb-3">
+            <Icon icon="chalkboard-user" gapRight />
+            <FormattedMessage id="app.terms.form.range" defaultMessage="Range" />
+          </h5>
 
           <Row>
             <Col lg={6} xl={4}>
@@ -207,6 +259,11 @@ const EditTermForm = ({ onSubmit, onClose, create = false, terms = EMPTY_ARRAY }
           </FormSpy>
 
           <hr />
+
+          <h5 className="text-secondary mb-3">
+            <VisibleIcon gapRight />
+            <FormattedMessage id="app.terms.form.visibility" defaultMessage="Visibility" />
+          </h5>
 
           <Row>
             <Col lg={6}>
@@ -296,10 +353,12 @@ const EditTermForm = ({ onSubmit, onClose, create = false, terms = EMPTY_ARRAY }
 
           <hr />
 
+          {submitError && <Callout variant="danger">{submitError}</Callout>}
+
           <div className="text-center">
             <TheButtonGroup>
-              <Button type="submit" variant="success">
-                <SaveIcon gapRight />
+              <Button type="submit" variant="success" disabled={submitting}>
+                {submitting ? <LoadingIcon gapRight /> : <SaveIcon gapRight />}
                 {create ? (
                   <FormattedMessage id="generic.create" defaultMessage="Create" />
                 ) : (
@@ -311,7 +370,7 @@ const EditTermForm = ({ onSubmit, onClose, create = false, terms = EMPTY_ARRAY }
                 {({ pristine, form }) =>
                   !pristine &&
                   !create && (
-                    <Button variant="danger" onClick={() => form.reset()}>
+                    <Button variant="danger" onClick={() => form.reset()} disabled={submitting}>
                       <RefreshIcon gapRight />
                       <FormattedMessage id="generic.reset" defaultMessage="Reset" />
                     </Button>
@@ -320,7 +379,7 @@ const EditTermForm = ({ onSubmit, onClose, create = false, terms = EMPTY_ARRAY }
               </FormSpy>
 
               {onClose && (
-                <Button onClick={onClose} variant="secondary">
+                <Button onClick={onClose} variant="secondary" disabled={submitting}>
                   <CloseIcon gapRight />
                   <FormattedMessage id="generic.cancel" defaultMessage="Cancel" />
                 </Button>
@@ -334,7 +393,8 @@ const EditTermForm = ({ onSubmit, onClose, create = false, terms = EMPTY_ARRAY }
 };
 
 EditTermForm.propTypes = {
-  id: PropTypes.string.isRequired,
+  initialValues: PropTypes.object.isRequired,
+  editTermId: PropTypes.string,
   onSubmit: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
   create: PropTypes.bool,
