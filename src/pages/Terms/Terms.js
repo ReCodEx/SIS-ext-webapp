@@ -6,6 +6,7 @@ import { FormattedMessage } from 'react-intl';
 import { Modal, Table } from 'react-bootstrap';
 import { lruMemoize } from 'reselect';
 import moment from 'moment';
+import { FORM_ERROR } from 'final-form';
 
 import Page from '../../components/layout/Page';
 import Box from '../../components/widgets/Box';
@@ -110,7 +111,7 @@ class Terms extends Component {
     }
   }
 
-  formSubmit = ({
+  formSubmit = async ({
     year,
     term,
     beginning = null,
@@ -121,6 +122,7 @@ class Terms extends Component {
     teachersUntil,
     archiveAfter = null,
   }) => {
+    const { createTerm, updateTerm } = this.props;
     const data = {
       year,
       term,
@@ -133,8 +135,13 @@ class Terms extends Component {
       archiveAfter: archiveAfter ? archiveAfter.startOf('day').unix() : null,
     };
 
-    return Promise.resolve();
-    // this.closeModal();
+    try {
+      await (this.state.editedTerm ? updateTerm(this.state.editedTerm, data) : createTerm(data));
+      this.closeModal();
+    } catch (err) {
+      return { [FORM_ERROR]: err?.message || 'Unknown error' };
+    }
+    return undefined; // no error
   };
 
   static loadAsync = ({ userId }, dispatch) =>
@@ -368,6 +375,7 @@ class Terms extends Component {
                               create={!this.state.editedTerm}
                               terms={terms}
                               initialValues={getTermInitialValues(terms, this.state.editedTerm)}
+                              editTermId={this.state.editedTerm || null}
                             />
                           </Modal.Body>
                         </Modal>
