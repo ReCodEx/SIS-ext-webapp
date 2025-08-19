@@ -87,6 +87,8 @@ const getTermInitialValues = lruMemoize((terms, id = null) => {
   }
 });
 
+const getSortedTerms = lruMemoize(terms => terms.sort((a, b) => a.year * 10 + a.term - (b.year * 10 + b.term)));
+
 class Terms extends Component {
   state = {
     modalOpen: false,
@@ -248,7 +250,7 @@ class Terms extends Component {
                           </thead>
 
                           <tbody>
-                            {terms.map((term, idx) => (
+                            {getSortedTerms(terms).map((term, idx) => (
                               <tr key={term.id || idx} className="align-middle">
                                 <td className="text-nowrap">
                                   {term.year}-{term.term} (
