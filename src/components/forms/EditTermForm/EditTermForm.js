@@ -142,7 +142,7 @@ const EditTermForm = ({ initialValues, onSubmit, onClose, editTermId = null, cre
               <NumericTextField
                 name="year"
                 maxLength={4}
-                validateMin={1900}
+                validateMin={2000}
                 validateMax={2200}
                 ignoreDirty={create}
                 label={
