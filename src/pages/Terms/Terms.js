@@ -127,12 +127,12 @@ class Terms extends Component {
       year,
       term,
       beginning: beginning ? beginning.startOf('day').unix() : null,
-      end: end ? end.startOf('day').unix() : null,
+      end: end ? end.endOf('day').unix() : null,
       studentsFrom: studentsFrom.startOf('day').unix(),
-      studentsUntil: studentsUntil.startOf('day').unix(),
+      studentsUntil: studentsUntil.endOf('day').unix(),
       teachersFrom: teachersFrom.startOf('day').unix(),
-      teachersUntil: teachersUntil.startOf('day').unix(),
-      archiveAfter: archiveAfter ? archiveAfter.startOf('day').unix() : null,
+      teachersUntil: teachersUntil.endOf('day').unix(),
+      archiveAfter: archiveAfter ? archiveAfter.endOf('day').unix() : null,
     };
 
     try {
