@@ -15,6 +15,7 @@ import Icon, {
   UserProfileIcon,
   TermIcon,
   WarningIcon,
+  JoinGroupIcon,
 } from '../../components/icons';
 import Callout from '../../components/widgets/Callout';
 
@@ -26,7 +27,7 @@ import { loggedInUserIdSelector } from '../../redux/selectors/auth.js';
 
 import { getReturnUrl, setReturnUrl } from '../../helpers/localStorage.js';
 import { knownLocalesNames } from '../../helpers/localizedData.js';
-import { isSuperadminRole } from '../../components/helpers/usersRoles.js';
+import { isStudentRole, isSuperadminRole } from '../../components/helpers/usersRoles.js';
 import withLinks from '../../helpers/withLinks.js';
 
 class Home extends Component {
@@ -82,7 +83,7 @@ class Home extends Component {
     const {
       loggedInUser,
       params: { token = null },
-      links: { USER_URI, TERMS_URI },
+      links: { USER_URI, TERMS_URI, GROUPS_STUDENT_URI },
     } = this.props;
 
     return (
@@ -149,6 +150,31 @@ class Home extends Component {
                     </p>
                   </Col>
                 </Row>
+
+                {isStudentRole(user.role) && (
+                  <Row className="mb-4">
+                    <Col xs={false} sm="auto">
+                      <h3>
+                        <JoinGroupIcon gapLeft={2} gapRight={2} fixedWidth className="text-body-secondary" />
+                      </h3>
+                    </Col>
+                    <Col xs={12} sm>
+                      <h3>
+                        <Link to={GROUPS_STUDENT_URI} className="link-body-emphasis">
+                          <FormattedMessage id="app.sidebar.menu.groupsStudent" defaultMessage="Join Groups" />
+                          <LinkIcon gapLeft={3} />
+                        </Link>
+                      </h3>
+
+                      <p>
+                        <FormattedMessage
+                          id="app.homepage.groupsStudentPage"
+                          defaultMessage="Join groups that correspond to your enrolled courses in SIS."
+                        />
+                      </p>
+                    </Col>
+                  </Row>
+                )}
 
                 {isSuperadminRole(user.role) && (
                   <Row className="mb-4">
