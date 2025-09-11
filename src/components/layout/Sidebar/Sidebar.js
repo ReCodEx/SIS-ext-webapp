@@ -10,7 +10,7 @@ import UserPanelContainer from '../../../containers/UserPanelContainer';
 import MenuItem from '../../widgets/Sidebar/MenuItem';
 import { LoadingIcon } from '../../icons';
 import { getJsData } from '../../../redux/helpers/resourceManager';
-import { isSupervisorRole, isSuperadminRole } from '../../helpers/usersRoles.js';
+import { isStudentRole, isSupervisorRole, isSuperadminRole } from '../../helpers/usersRoles.js';
 import withLinks from '../../../helpers/withLinks.js';
 import { getConfigVar } from '../../../helpers/config.js';
 import { getReturnUrl } from '../../../helpers/localStorage.js';
@@ -21,7 +21,12 @@ const URL_PREFIX = getConfigVar('URL_PATH_PREFIX');
 
 const getUserData = lruMemoize(user => getJsData(user));
 
-const Sidebar = ({ pendingFetchOperations, loggedInUser, currentUrl, links: { HOME_URI, USER_URI, TERMS_URI } }) => {
+const Sidebar = ({
+  pendingFetchOperations,
+  loggedInUser,
+  currentUrl,
+  links: { HOME_URI, USER_URI, TERMS_URI, GROUPS_STUDENT_URI },
+}) => {
   const user = getUserData(loggedInUser);
 
   return (
@@ -69,6 +74,14 @@ const Sidebar = ({ pendingFetchOperations, loggedInUser, currentUrl, links: { HO
                     link={USER_URI}
                   />
 
+                  {isStudentRole(user.role) && (
+                    <MenuItem
+                      title={<FormattedMessage id="app.sidebar.menu.groupsStudent" defaultMessage="Join Groups" />}
+                      icon="people-group"
+                      currentPath={currentUrl}
+                      link={GROUPS_STUDENT_URI}
+                    />
+                  )}
                   {isSupervisorRole(user.role) && <></>}
                   {isSuperadminRole(user.role) && <></>}
 

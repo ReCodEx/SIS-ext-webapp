@@ -3,6 +3,7 @@ import { matchPath, Routes, Route, Navigate } from 'react-router-dom';
 
 /* container components */
 import App from '../containers/App';
+import GroupsStudent from './GroupsStudent';
 import Home from './Home';
 import Terms from './Terms';
 import User from './User';
@@ -69,6 +70,7 @@ const routesDescriptors = [
   r('login/:token', Home, 'LOGIN_URI'),
   r('app/user', User, 'USER_URI', true),
   r('app/terms', Terms, 'TERMS_URI', true),
+  r('app/groups-student', GroupsStudent, 'GROUPS_STUDENT_URI', true),
 ];
 
 /*

@@ -2,6 +2,7 @@ import { combineReducers } from 'redux';
 
 import app from './modules/app.js';
 import auth, { actionTypes as authActionTypes } from './modules/auth.js';
+import courses from './modules/courses.js';
 import notifications from './modules/notifications.js';
 import sisUsers from './modules/sisUsers.js';
 import terms from './modules/terms.js';
@@ -10,6 +11,7 @@ import users from './modules/users.js';
 const createRecodexReducers = (token, lang) => ({
   app: app(lang),
   auth: auth(token),
+  courses,
   notifications,
   sisUsers,
   terms,
