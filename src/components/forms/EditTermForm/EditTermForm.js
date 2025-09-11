@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Form, Field, FormSpy } from 'react-final-form';
 import { FormattedMessage } from 'react-intl';
 import { Row, Col } from 'react-bootstrap';
+import moment from 'moment';
 
 import Icon, { CloseIcon, LinkIcon, LoadingIcon, RefreshIcon, SaveIcon, VisibleIcon } from '../../icons';
 import Button, { TheButtonGroup } from '../../widgets/TheButton';
@@ -16,6 +17,8 @@ const termOptions = [
   { name: <FormattedMessage id="app.terms.form.term.winter" defaultMessage="1-Winter" />, key: 1 },
   { name: <FormattedMessage id="app.terms.form.term.summer" defaultMessage="2-Summer" />, key: 2 },
 ];
+
+const getUnixTs = m => (m && moment.isMoment(m) ? m.unix() : null);
 
 const validate = lruMemoize((terms, id) => values => {
   const termIndex = arrayToObject(terms, ({ year, term }) => `${year}-${term}`);
@@ -38,8 +41,8 @@ const validate = lruMemoize((terms, id) => values => {
   }
 
   // beginning and end
-  const beginningTs = values.beginning?.unix();
-  const endTs = values.end?.unix();
+  const beginningTs = getUnixTs(values.beginning);
+  const endTs = getUnixTs(values.end);
   if (!beginningTs && endTs) {
     errors.beginning = (
       <FormattedMessage
@@ -66,8 +69,8 @@ const validate = lruMemoize((terms, id) => values => {
   }
 
   // student dates
-  const studentsFromTs = values.studentsFrom?.unix();
-  const studentsUntilTs = values.studentsUntil?.unix();
+  const studentsFromTs = getUnixTs(values.studentsFrom);
+  const studentsUntilTs = getUnixTs(values.studentsUntil);
   if (!studentsFromTs) {
     errors.studentsFrom = (
       <FormattedMessage id="app.terms.form.validate.missingFrom" defaultMessage="The 'from' date must be provided." />
@@ -89,8 +92,8 @@ const validate = lruMemoize((terms, id) => values => {
   }
 
   // teacher dates
-  const teachersFromTs = values.teachersFrom?.unix();
-  const teachersUntilTs = values.teachersUntil?.unix();
+  const teachersFromTs = getUnixTs(values.teachersFrom);
+  const teachersUntilTs = getUnixTs(values.teachersUntil);
   if (!teachersFromTs) {
     errors.teachersFrom = (
       <FormattedMessage id="app.terms.form.validate.missingFrom" defaultMessage="The 'from' date must be provided." />
@@ -111,7 +114,7 @@ const validate = lruMemoize((terms, id) => values => {
     );
   }
 
-  const archiveAfterTs = values.archiveAfter?.unix();
+  const archiveAfterTs = getUnixTs(values.archiveAfter);
   if (
     archiveAfterTs &&
     studentsUntilTs &&
