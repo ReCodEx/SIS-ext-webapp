@@ -2,25 +2,35 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import { connect } from 'react-redux';
-import { FormattedMessage, injectIntl } from 'react-intl';
+import { FormattedMessage } from 'react-intl';
 import { lruMemoize } from 'reselect';
 
 import Page from '../../components/layout/Page';
 import Box from '../../components/widgets/Box';
-// import Button, { TheButtonGroup } from '../../components/widgets/TheButton';
-import { JoinGroupIcon, LabsIcon, LectureIcon, TermIcon } from '../../components/icons';
+import CoursesGroupsList from '../../components/Groups/CoursesGroupsList';
+import Button from '../../components/widgets/TheButton';
+import { DownloadIcon, JoinGroupIcon, LoadingIcon, RefreshIcon, TermIcon } from '../../components/icons';
 import ResourceRenderer from '../../components/helpers/ResourceRenderer';
 
 import { fetchStudentCourses } from '../../redux/modules/courses.js';
-import { fetchUserIfNeeded } from '../../redux/modules/users.js';
+import { fetchStudentGroups, joinGroup } from '../../redux/modules/groups.js';
+import { fetchUser, fetchUserIfNeeded } from '../../redux/modules/users.js';
 import { fetchAllTerms } from '../../redux/modules/terms.js';
 import { loggedInUserIdSelector } from '../../redux/selectors/auth.js';
-import { studentCoursesSelector } from '../../redux/selectors/courses.js';
+import {
+  studentCoursesSelector,
+  getStudentCoursesRefetchedSelector,
+  allStudentCoursesReadySelector,
+} from '../../redux/selectors/courses.js';
+import { getGroups } from '../../redux/selectors/groups.js';
 import { termsSelector } from '../../redux/selectors/terms.js';
 import { loggedInUserSelector } from '../../redux/selectors/users.js';
 
 import { isStudentRole } from '../../components/helpers/usersRoles.js';
 import Callout from '../../components/widgets/Callout/Callout.js';
+import DateTime from '../../components/widgets/DateTime/DateTime.js';
+
+import { isReady } from '../../redux/helpers/resourceManager';
 
 const DEFAULT_EXPIRATION = 7; // days
 
@@ -31,9 +41,16 @@ const getSortedTerms = lruMemoize(terms => {
     .sort((b, a) => a.year * 10 + a.term - (b.year * 10 + b.term));
 });
 
-const getCourseName = ({ course }, locale) => {
-  const key = `caption_${locale}`;
-  return course?.[key] || course?.caption_en || course?.caption_cs || '???';
+const getAllSisIds = results => {
+  const sisIds = new Set();
+  results.forEach(({ value }) => {
+    value?.student?.forEach(course => {
+      if (course?.sisId) {
+        sisIds.add(course.sisId);
+      }
+    });
+  });
+  return Array.from(sisIds);
 };
 
 class GroupsStudent extends Component {
@@ -47,19 +64,24 @@ class GroupsStudent extends Component {
     }
   }
 
-  static loadAsync = ({ userId }, dispatch) =>
+  static loadAsync = ({ userId }, dispatch, expiration = DEFAULT_EXPIRATION) =>
     Promise.all([
-      dispatch(fetchUserIfNeeded(userId)),
+      dispatch(fetchUserIfNeeded(userId, { allowReload: true })),
       dispatch(fetchAllTerms()).then(({ value }) => {
         const now = Math.floor(Date.now() / 1000);
         return Promise.all(
           value
             .filter(term => term.studentsFrom <= now && term.studentsUntil >= now)
             .map(term =>
-              dispatch(fetchStudentCourses(term.year, term.term, DEFAULT_EXPIRATION)).catch(
+              dispatch(fetchStudentCourses(term.year, term.term, expiration)).catch(
                 () => dispatch(fetchStudentCourses(term.year, term.term)) // fallback (no expiration = from cache only)
               )
             )
+        ).then(values =>
+          Promise.all([
+            dispatch(fetchStudentGroups(getAllSisIds(values))),
+            dispatch(fetchUser(userId, { allowReload: true })),
+          ])
         );
       }),
     ]);
@@ -69,8 +91,13 @@ class GroupsStudent extends Component {
       loggedInUser,
       terms,
       coursesSelector,
-      intl: { locale },
+      coursesRefetchedSelector,
+      allStudentCoursesReady,
+      groups,
+      joinGroup,
+      loadAsync,
     } = this.props;
+    const userReady = isReady(loggedInUser);
 
     return (
       <Page
@@ -80,72 +107,86 @@ class GroupsStudent extends Component {
         {user =>
           isStudentRole(user.role) ? (
             <ResourceRenderer resourceArray={terms}>
-              {terms =>
-                getSortedTerms(terms).length > 0 ? (
-                  getSortedTerms(terms).map((term, idx) => (
-                    <Box
-                      key={`${term.year}-${term.term}`}
-                      title={
-                        <>
-                          <TermIcon gapRight={3} className="text-muted" />
-                          <strong>
-                            {term.year}-{term.term}
-                          </strong>{' '}
-                          <small className="text-muted ms-2">
-                            (
-                            {term.term === 1 && (
-                              <FormattedMessage id="app.groupsStudent.term.winter" defaultMessage="Winter Term" />
-                            )}
-                            {term.term === 2 && (
-                              <FormattedMessage id="app.groupsStudent.term.summer" defaultMessage="Summer Term" />
-                            )}
-                            )
-                          </small>
-                        </>
-                      }
-                      collapsable
-                      isOpen={idx === 0}>
-                      <ResourceRenderer resource={coursesSelector(term.year, term.term)}>
-                        {courses =>
-                          courses && courses.length > 0 ? (
-                            <table>
-                              {courses.map(course => (
-                                <tbody key={course.id}>
-                                  <tr>
-                                    <td className="text-muted text-nowrap">
-                                      {course.type === 'lecture' && <LectureIcon />}
-                                      {course.type === 'labs' && <LabsIcon />}
-                                    </td>
-                                    <td>{course.dayOfWeek}</td>
-                                    <td>{course.time}</td>
-                                    <td>{course.room}</td>
-                                    <td>{course.sisId}</td>
-                                    <td>{getCourseName(course, locale)}</td>
-                                  </tr>
-                                </tbody>
-                              ))}
-                            </table>
-                          ) : (
-                            <div className="m-3 text-center text-muted">
-                              <FormattedMessage
-                                id="app.groupsStudent.noCourses"
-                                defaultMessage="There are currently no courses available for this term."
-                              />
-                            </div>
-                          )
-                        }
-                      </ResourceRenderer>
-                    </Box>
-                  ))
-                ) : (
-                  <Callout type="info">
+              {terms => (
+                <>
+                  <Callout type="info" className="mb-3">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="float-end"
+                      disabled={!userReady || !allStudentCoursesReady}
+                      onClick={() => loadAsync(user.id, 0)}>
+                      {userReady && allStudentCoursesReady ? <RefreshIcon gapRight /> : <LoadingIcon gapRight />}
+                      <FormattedMessage id="app.groupsStudent.refreshButton" defaultMessage="Reload from SIS" />
+                    </Button>
                     <FormattedMessage
-                      id="app.groupsStudent.noActiveTerms"
-                      defaultMessage="There are currently no terms available for students."
+                      id="app.groupsStudent.lastRefreshInfo"
+                      defaultMessage="The list of enrolled courses was last downloaded from SIS"
                     />
+                    &nbsp;&nbsp;
+                    <i>
+                      <DateTime unixts={user.sisEventsLoaded} showSeconds showRelative />
+                    </i>
+                    .
                   </Callout>
-                )
-              }
+
+                  {getSortedTerms(terms).length > 0 ? (
+                    getSortedTerms(terms).map((term, idx) => (
+                      <Box
+                        key={`${term.year}-${term.term}`}
+                        title={
+                          <>
+                            <TermIcon gapRight={3} className="text-muted" />
+                            <strong>
+                              {term.year}-{term.term}
+                            </strong>{' '}
+                            <small className="text-muted ms-2">
+                              (
+                              {term.term === 1 && (
+                                <FormattedMessage id="app.groupsStudent.term.winter" defaultMessage="Winter Term" />
+                              )}
+                              {term.term === 2 && (
+                                <FormattedMessage id="app.groupsStudent.term.summer" defaultMessage="Summer Term" />
+                              )}
+                              )
+                            </small>
+                            {coursesRefetchedSelector(term.year, term.term) && (
+                              <DownloadIcon
+                                gapLeft={3}
+                                className="text-success"
+                                tooltip={
+                                  <FormattedMessage
+                                    id="app.groupsStudent.coursesRefetched"
+                                    defaultMessage="The courses were just re-downloaded from SIS."
+                                  />
+                                }
+                                tooltipId={`fresh-${term.year}-${term.term}`}
+                                tooltipPlacement="bottom"
+                              />
+                            )}
+                          </>
+                        }
+                        unlimitedHeight
+                        collapsable
+                        isOpen={idx === 0}>
+                        <CoursesGroupsList
+                          courses={coursesSelector(term.year, term.term)}
+                          groups={groups}
+                          allowHiding
+                          joinGroup={joinGroup}
+                        />
+                      </Box>
+                    ))
+                  ) : (
+                    <Callout type="info">
+                      <FormattedMessage
+                        id="app.groupsStudent.noActiveTerms"
+                        defaultMessage="There are currently no terms available for students."
+                      />
+                    </Callout>
+                  )}
+                </>
+              )}
             </ResourceRenderer>
           ) : (
             <Callout type="warning">
@@ -166,8 +207,11 @@ GroupsStudent.propTypes = {
   loggedInUser: ImmutablePropTypes.map,
   terms: ImmutablePropTypes.list,
   coursesSelector: PropTypes.func,
+  coursesRefetchedSelector: PropTypes.func,
+  allStudentCoursesReady: PropTypes.bool,
+  groups: ImmutablePropTypes.map,
   loadAsync: PropTypes.func.isRequired,
-  intl: PropTypes.shape({ locale: PropTypes.string.isRequired }).isRequired,
+  joinGroup: PropTypes.func.isRequired,
 };
 
 export default connect(
@@ -176,8 +220,13 @@ export default connect(
     loggedInUser: loggedInUserSelector(state),
     terms: termsSelector(state),
     coursesSelector: studentCoursesSelector(state),
+    coursesRefetchedSelector: getStudentCoursesRefetchedSelector(state),
+    allStudentCoursesReady: allStudentCoursesReadySelector(state),
+    groups: getGroups(state),
   }),
   dispatch => ({
-    loadAsync: userId => GroupsStudent.loadAsync({ userId }, dispatch),
+    loadAsync: (userId, expiration = DEFAULT_EXPIRATION) => GroupsStudent.loadAsync({ userId }, dispatch, expiration),
+    joinGroup: (groupId, reloadGroupsOFCourses) =>
+      dispatch(joinGroup(groupId)).then(() => dispatch(fetchStudentGroups(reloadGroupsOFCourses))),
   })
-)(injectIntl(GroupsStudent));
+)(GroupsStudent);

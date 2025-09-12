@@ -1,0 +1,25 @@
+table.coursesGroupsList td {
+  padding: 0.25rem 0.5rem;
+  vertical-align: middle;
+}
+
+table.coursesGroupsList tbody tr:first-of-type td {
+  border-bottom: 1px solid #ddd;
+  background-color: #eee;
+}
+
+table.coursesGroupsList tbody:first-of-type tr:first-of-type td {
+  border-top: 1px solid #ddd;
+}
+
+table.coursesGroupsList tbody tr:first-of-type:hover td {
+  background-color: #e4e4e4;
+}
+
+table.coursesGroupsList tbody tr:nth-of-type(n+2):hover td {
+  background-color: #f7f7f7;
+}
+
+table.coursesGroupsList tbody tr:last-of-type td {
+  border-bottom: 1px solid #ddd;
+}

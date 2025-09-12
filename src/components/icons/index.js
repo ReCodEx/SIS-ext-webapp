@@ -12,9 +12,9 @@ export const AbortIcon = props => <Icon {...props} icon="car-crash" />;
 export const AcceptIcon = props => <Icon {...props} icon={['far', 'handshake']} />;
 export const AcceptedIcon = props => <Icon {...props} icon="circle-check" />;
 export const AddIcon = props => <Icon {...props} icon="plus-circle" />;
+export const AddUserIcon = props => <Icon {...props} icon="user-plus" />;
 export const AdminIcon = props => <Icon {...props} icon="user-tie" />;
 export const AdminRoleIcon = props => <Icon {...props} icon="crown" />;
-export const AdressIcon = props => <Icon {...props} icon="at" />;
 export const ArchiveIcon = ({ archived = false, ...props }) => (
   <Icon {...props} icon={archived ? 'dolly' : 'boxes-packing'} />
 );
@@ -161,12 +161,9 @@ export const UploadIcon = props => <Icon {...props} icon="cloud-upload-alt" />;
 export const UserIcon = props => <Icon {...props} icon={['far', 'user']} />;
 export const UserLockIcon = props => <Icon {...props} icon="user-lock" />;
 export const UserProfileIcon = props => <Icon {...props} icon={['far', 'address-card']} />;
-export const VisibleIcon = ({ visible = true, ...props }) =>
-  visible ? (
-    <Icon {...props} icon={['far', 'eye']} />
-  ) : (
-    <Icon className="text-body-secondary" {...props} icon={['far', 'eye-slash']} />
-  );
+export const VisibleIcon = ({ visible = true, ...props }) => (
+  <Icon {...props} icon={visible ? ['far', 'eye'] : ['far', 'eye-slash']} />
+);
 export const WarningIcon = props => <Icon {...props} icon="exclamation-triangle" />;
 export const WorkingIcon = props => <Icon {...props} spin icon="cog" />;
 export const ZipIcon = props => <Icon {...props} icon={['far', 'file-archive']} />;
