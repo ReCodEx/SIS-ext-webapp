@@ -1,4 +1,5 @@
 import { createSelector } from 'reselect';
+import { isReady } from '../helpers/resourceManager';
 
 const getCourses = state => state.courses;
 const getStudent = courses => courses.get('student');
@@ -16,6 +17,10 @@ export const studentCoursesSelector = createSelector(
 export const getStudentCoursesRefetchedSelector = createSelector(
   studentsSelector,
   courses => (year, term) => courses.getIn([`${year}-${term}`, 'refetched'], false)
+);
+
+export const allStudentCoursesReadySelector = createSelector(studentsSelector, courses =>
+  courses.every(record => isReady(record))
 );
 
 export const teacherCoursesSelector = createSelector(
