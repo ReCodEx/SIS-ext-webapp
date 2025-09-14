@@ -152,29 +152,44 @@ const CoursesGroupsList = ({ courses, groups, allowHiding = false, joinGroup = n
                               />
                             )}
                           </td>
-                          <td className="text-nowrap fw-bold">
-                            <DayOfWeek dow={course.dayOfWeek} />
-                          </td>
-                          <td className="text-nowrap fw-bold">{getTimeStr(course.time)}</td>
-                          <td className="text-nowrap text-muted">
-                            {course.fortnight && (
-                              <>
-                                (
-                                {course.firstWeek % 2 === 1 ? (
-                                  <FormattedMessage
-                                    id="app.coursesGroupsList.firstWeekOdd"
-                                    defaultMessage="odd weeks"
-                                  />
-                                ) : (
-                                  <FormattedMessage
-                                    id="app.coursesGroupsList.firstWeekEven"
-                                    defaultMessage="even weeks"
-                                  />
+
+                          {course.dayOfWeek === null && course.time === null ? (
+                            <td colSpan={3} className="text-nowrap text-muted small text-center fw-italic">
+                              (
+                              <FormattedMessage
+                                id="app.coursesGroupsList.notScheduled"
+                                defaultMessage="not scheduled"
+                              />
+                              )
+                            </td>
+                          ) : (
+                            <>
+                              <td className="text-nowrap fw-bold">
+                                <DayOfWeek dow={course.dayOfWeek} />
+                              </td>
+                              <td className="text-nowrap fw-bold">{getTimeStr(course.time)}</td>
+                              <td className="text-nowrap text-muted">
+                                {course.fortnight && (
+                                  <>
+                                    (
+                                    {course.firstWeek % 2 === 1 ? (
+                                      <FormattedMessage
+                                        id="app.coursesGroupsList.firstWeekOdd"
+                                        defaultMessage="odd weeks"
+                                      />
+                                    ) : (
+                                      <FormattedMessage
+                                        id="app.coursesGroupsList.firstWeekEven"
+                                        defaultMessage="even weeks"
+                                      />
+                                    )}
+                                    )
+                                  </>
                                 )}
-                                )
-                              </>
-                            )}
-                          </td>
+                              </td>
+                            </>
+                          )}
+
                           <td className="text-nowrap fw-bold">{course.room}</td>
                           <td className="text-nowrap fw-bold">{course.fullName}</td>
                           <td className="w-100 text-nowrap">

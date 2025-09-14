@@ -27,3 +27,12 @@ export const teacherCoursesSelector = createSelector(
   teachersSelector,
   courses => (year, term) => courses.get(`${year}-${term}`)
 );
+
+export const getTeacherCoursesRefetchedSelector = createSelector(
+  teachersSelector,
+  courses => (year, term) => courses.getIn([`${year}-${term}`, 'refetched'], false)
+);
+
+export const allTeacherCoursesReadySelector = createSelector(teachersSelector, courses =>
+  courses.every(record => isReady(record))
+);

@@ -63,6 +63,7 @@ export const ForkIcon = props => <Icon {...props} icon="code-branch" />;
 export const GroupIcon = ({ organizational = false, archived = false, exam = false, ...props }) => (
   <Icon {...props} icon={organizational ? 'sitemap' : archived ? 'archive' : exam ? 'person-circle-check' : 'users'} />
 );
+export const GroupFocusIcon = props => <Icon {...props} icon="users-viewfinder" />;
 export const GroupExamsIcon = props => <Icon {...props} icon="lock" />;
 export const HomeIcon = props => <Icon {...props} icon="home" />;
 export const InfoIcon = props => <Icon {...props} icon="info-circle" />;
