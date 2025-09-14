@@ -7,7 +7,19 @@ import { Badge, Button } from 'react-bootstrap';
 
 import ResourceRenderer from '../../helpers/ResourceRenderer';
 import DayOfWeek from '../../widgets/DayOfWeek';
-import { AddUserIcon, GroupIcon, LabsIcon, LectureIcon, LinkIcon, LoadingIcon, VisibleIcon } from '../../icons';
+import {
+  AddUserIcon,
+  AdminRoleIcon,
+  GroupIcon,
+  LabsIcon,
+  LectureIcon,
+  LinkIcon,
+  LoadingIcon,
+  ObserverIcon,
+  SupervisorIcon,
+  StudentsIcon,
+  VisibleIcon,
+} from '../../icons';
 
 import './CoursesGroupsList.css';
 import { TheButtonGroup } from '../../widgets/TheButton';
@@ -200,7 +212,65 @@ const CoursesGroupsList = ({ courses, groups, allowHiding = false, joinGroup = n
 
                         {sisGroups[course.sisId]?.map(group => (
                           <tr key={group.id}>
-                            <td colSpan={2} className="text-end text-muted">
+                            <td colSpan={3} className="text-end text-muted">
+                              {group.membership === 'admin' && (
+                                <AdminRoleIcon
+                                  gapRight
+                                  className="text-primary"
+                                  tooltipId={`admin-${group.id}`}
+                                  tooltipPlacement="bottom"
+                                  tooltip={
+                                    <FormattedMessage
+                                      id="app.coursesGroupsList.admin"
+                                      defaultMessage="You are an administrator of this group"
+                                    />
+                                  }
+                                />
+                              )}
+                              {group.membership === 'supervisor' && (
+                                <SupervisorIcon
+                                  gapRight
+                                  className="text-primary"
+                                  tooltipId={`supervisor-${group.id}`}
+                                  tooltipPlacement="bottom"
+                                  tooltip={
+                                    <FormattedMessage
+                                      id="app.coursesGroupsList.supervisor"
+                                      defaultMessage="You are a supervisor of this group"
+                                    />
+                                  }
+                                />
+                              )}
+                              {group.membership === 'observer' && (
+                                <ObserverIcon
+                                  gapRight
+                                  className="opacity-50"
+                                  tooltipId={`observer-${group.id}`}
+                                  tooltipPlacement="bottom"
+                                  tooltip={
+                                    <FormattedMessage
+                                      id="app.coursesGroupsList.observer"
+                                      defaultMessage="You are an observer of this group"
+                                    />
+                                  }
+                                />
+                              )}
+                              {group.membership === 'student' && (
+                                <StudentsIcon
+                                  gapRight
+                                  className="text-success"
+                                  tooltipId={`student-${group.id}`}
+                                  tooltipPlacement="bottom"
+                                  tooltip={
+                                    <FormattedMessage
+                                      id="app.coursesGroupsList.student"
+                                      defaultMessage="You are a student of this group"
+                                    />
+                                  }
+                                />
+                              )}
+                              {group.membership === 'joining' && <LoadingIcon gapRight />}
+
                               <GroupIcon
                                 tooltip={
                                   <FormattedMessage id="app.coursesGroupsList.group" defaultMessage="ReCodEx group" />
@@ -209,7 +279,7 @@ const CoursesGroupsList = ({ courses, groups, allowHiding = false, joinGroup = n
                                 tooltipPlacement="bottom"
                               />
                             </td>
-                            <td colSpan={5} className="w-100">
+                            <td colSpan={4} className="w-100">
                               {group.fullName}
                             </td>
                             <td className="text-nowrap text-end">
