@@ -12,21 +12,21 @@ import Button from '../../components/widgets/TheButton';
 import { DownloadIcon, JoinGroupIcon, LoadingIcon, RefreshIcon, TermIcon } from '../../components/icons';
 import ResourceRenderer from '../../components/helpers/ResourceRenderer';
 
-import { fetchStudentCourses } from '../../redux/modules/courses.js';
-import { fetchStudentGroups, joinGroup } from '../../redux/modules/groups.js';
+import { fetchTeacherCourses } from '../../redux/modules/courses.js';
+import { fetchTeacherGroups } from '../../redux/modules/groups.js';
 import { fetchUser, fetchUserIfNeeded } from '../../redux/modules/users.js';
 import { fetchAllTerms } from '../../redux/modules/terms.js';
 import { loggedInUserIdSelector } from '../../redux/selectors/auth.js';
 import {
-  studentCoursesSelector,
-  getStudentCoursesRefetchedSelector,
-  allStudentCoursesReadySelector,
+  teacherCoursesSelector,
+  getTeacherCoursesRefetchedSelector,
+  allTeacherCoursesReadySelector,
 } from '../../redux/selectors/courses.js';
 import { getGroups } from '../../redux/selectors/groups.js';
 import { termsSelector } from '../../redux/selectors/terms.js';
 import { loggedInUserSelector } from '../../redux/selectors/users.js';
 
-import { isStudentRole } from '../../components/helpers/usersRoles.js';
+import { isSupervisorRole } from '../../components/helpers/usersRoles.js';
 import Callout from '../../components/widgets/Callout/Callout.js';
 import DateTime from '../../components/widgets/DateTime/DateTime.js';
 
@@ -37,23 +37,27 @@ const DEFAULT_EXPIRATION = 7; // days
 const getSortedTerms = lruMemoize(terms => {
   const now = Math.floor(Date.now() / 1000);
   return terms
-    .filter(term => term.studentsFrom <= now && term.studentsUntil >= now)
+    .filter(term => term.teachersFrom <= now && term.teachersUntil >= now)
     .sort((b, a) => a.year * 10 + a.term - (b.year * 10 + b.term));
 });
 
 const getAllSisIds = results => {
-  const sisIds = new Set();
+  const eventIds = new Set();
+  const courseIds = new Set();
   results.forEach(({ value }) => {
-    value?.student?.forEach(sisEvent => {
+    [...(value?.teacher || []), ...(value?.guarantor || [])].forEach(sisEvent => {
       if (sisEvent?.sisId) {
-        sisIds.add(sisEvent.sisId);
+        eventIds.add(sisEvent.sisId);
+      }
+      if (sisEvent?.course?.code) {
+        courseIds.add(sisEvent.course.code);
       }
     });
   });
-  return Array.from(sisIds);
+  return [Array.from(eventIds), Array.from(courseIds)];
 };
 
-class GroupsStudent extends Component {
+class GroupsTeacher extends Component {
   componentDidMount() {
     this.props.loadAsync(this.props.loggedInUserId);
   }
@@ -71,18 +75,21 @@ class GroupsStudent extends Component {
         const now = Math.floor(Date.now() / 1000);
         return Promise.all(
           value
-            .filter(term => term.studentsFrom <= now && term.studentsUntil >= now)
+            .filter(term => term.teachersFrom <= now && term.teachersUntil >= now)
             .map(term =>
-              dispatch(fetchStudentCourses(term.year, term.term, expiration)).catch(
-                () => dispatch(fetchStudentCourses(term.year, term.term)) // fallback (no expiration = from cache only)
+              dispatch(fetchTeacherCourses(term.year, term.term, expiration)).catch(
+                () => dispatch(fetchTeacherCourses(term.year, term.term)) // fallback (no expiration = from cache only)
               )
             )
-        ).then(values =>
-          Promise.all([
-            dispatch(fetchStudentGroups(getAllSisIds(values))),
+        ).then(values => {
+          const [eventIds, courseIds] = getAllSisIds(values);
+          return Promise.all([
+            eventIds.length + courseIds.length > 0
+              ? dispatch(fetchTeacherGroups(eventIds, courseIds))
+              : Promise.resolve(),
             dispatch(fetchUser(userId, { allowReload: true })),
-          ])
-        );
+          ]);
+        });
       }),
     ]);
 
@@ -92,9 +99,8 @@ class GroupsStudent extends Component {
       terms,
       coursesSelector,
       coursesRefetchedSelector,
-      allStudentCoursesReady,
+      allTeacherCoursesReady,
       groups,
-      joinGroup,
       loadAsync,
     } = this.props;
     const userReady = isReady(loggedInUser);
@@ -103,9 +109,9 @@ class GroupsStudent extends Component {
       <Page
         resource={loggedInUser}
         icon={<JoinGroupIcon />}
-        title={<FormattedMessage id="app.groupsStudent.title" defaultMessage="Joining Groups as Student" />}>
+        title={<FormattedMessage id="app.groupsTeacher.title" defaultMessage="Create Groups for SIS Courses" />}>
         {user =>
-          isStudentRole(user.role) ? (
+          isSupervisorRole(user.role) ? (
             <ResourceRenderer resourceArray={terms}>
               {terms => (
                 <>
@@ -114,14 +120,14 @@ class GroupsStudent extends Component {
                       variant="primary"
                       size="sm"
                       className="float-end"
-                      disabled={!userReady || !allStudentCoursesReady}
+                      disabled={!userReady || !allTeacherCoursesReady}
                       onClick={() => loadAsync(user.id, 0)}>
-                      {userReady && allStudentCoursesReady ? <RefreshIcon gapRight /> : <LoadingIcon gapRight />}
+                      {userReady && allTeacherCoursesReady ? <RefreshIcon gapRight /> : <LoadingIcon gapRight />}
                       <FormattedMessage id="app.groups.refreshButton" defaultMessage="Reload from SIS" />
                     </Button>
                     <FormattedMessage
-                      id="app.groupsStudent.lastRefreshInfo"
-                      defaultMessage="The list of enrolled courses was last downloaded from SIS"
+                      id="app.groupsTeacher.lastRefreshInfo"
+                      defaultMessage="The list of courses taught by you was last downloaded from SIS"
                     />
                     &nbsp;&nbsp;
                     <i>
@@ -169,19 +175,14 @@ class GroupsStudent extends Component {
                         unlimitedHeight
                         collapsable
                         isOpen={idx === 0}>
-                        <CoursesGroupsList
-                          courses={coursesSelector(term.year, term.term)}
-                          groups={groups}
-                          allowHiding
-                          joinGroup={joinGroup}
-                        />
+                        <CoursesGroupsList courses={coursesSelector(term.year, term.term)} groups={groups} />
                       </Box>
                     ))
                   ) : (
                     <Callout type="info">
                       <FormattedMessage
-                        id="app.groupsStudent.noActiveTerms"
-                        defaultMessage="There are currently no terms available for students."
+                        id="app.groupsTeacher.noActiveTerms"
+                        defaultMessage="There are currently no terms available for teachers."
                       />
                     </Callout>
                   )}
@@ -191,8 +192,8 @@ class GroupsStudent extends Component {
           ) : (
             <Callout type="warning">
               <FormattedMessage
-                id="app.groupsStudent.notStudent"
-                defaultMessage="This page is available only to students."
+                id="app.groupsTeacher.notTeacher"
+                defaultMessage="This page is available only to teachers."
               />
             </Callout>
           )
@@ -202,16 +203,15 @@ class GroupsStudent extends Component {
   }
 }
 
-GroupsStudent.propTypes = {
+GroupsTeacher.propTypes = {
   loggedInUserId: PropTypes.string,
   loggedInUser: ImmutablePropTypes.map,
   terms: ImmutablePropTypes.list,
   coursesSelector: PropTypes.func,
   coursesRefetchedSelector: PropTypes.func,
-  allStudentCoursesReady: PropTypes.bool,
+  allTeacherCoursesReady: PropTypes.bool,
   groups: ImmutablePropTypes.map,
   loadAsync: PropTypes.func.isRequired,
-  joinGroup: PropTypes.func.isRequired,
 };
 
 export default connect(
@@ -219,14 +219,12 @@ export default connect(
     loggedInUserId: loggedInUserIdSelector(state),
     loggedInUser: loggedInUserSelector(state),
     terms: termsSelector(state),
-    coursesSelector: studentCoursesSelector(state),
-    coursesRefetchedSelector: getStudentCoursesRefetchedSelector(state),
-    allStudentCoursesReady: allStudentCoursesReadySelector(state),
+    coursesSelector: teacherCoursesSelector(state),
+    coursesRefetchedSelector: getTeacherCoursesRefetchedSelector(state),
+    allTeacherCoursesReady: allTeacherCoursesReadySelector(state),
     groups: getGroups(state),
   }),
   dispatch => ({
-    loadAsync: (userId, expiration = DEFAULT_EXPIRATION) => GroupsStudent.loadAsync({ userId }, dispatch, expiration),
-    joinGroup: (groupId, reloadGroupsOFCourses) =>
-      dispatch(joinGroup(groupId)).then(() => dispatch(fetchStudentGroups(reloadGroupsOFCourses))),
+    loadAsync: (userId, expiration = DEFAULT_EXPIRATION) => GroupsTeacher.loadAsync({ userId }, dispatch, expiration),
   })
-)(GroupsStudent);
+)(GroupsTeacher);

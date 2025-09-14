@@ -27,6 +27,18 @@ export const fetchStudentCourses = (year, term, expiration = undefined) =>
 export const fetchTeacherCourses = (year, term, expiration = undefined) =>
   _fetchCourses(year, term, 'teacher', expiration);
 
+const getPayload = (payload, affiliation) => {
+  if (!payload || typeof payload !== 'object') {
+    return null;
+  }
+
+  if (affiliation === 'teacher') {
+    // special case, we need to merge in guarantor
+    return [...(payload.teacher || []), ...(payload.guarantor || [])];
+  }
+  return payload ? payload[affiliation] : null;
+};
+
 /**
  * Reducer
  */
@@ -43,7 +55,7 @@ const reducer = handleActions(
       state
         .setIn(
           [affiliation, `${year}-${term}`],
-          createRecord({ state: resourceStatus.FULFILLED, data: payload[affiliation] })
+          createRecord({ state: resourceStatus.FULFILLED, data: getPayload(payload, affiliation) })
         )
         .setIn([affiliation, `${year}-${term}`, 'refetched'], payload.refetched || false),
 

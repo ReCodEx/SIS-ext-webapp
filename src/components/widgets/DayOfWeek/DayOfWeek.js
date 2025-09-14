@@ -12,7 +12,7 @@ const DAYS = {
   6: <FormattedMessage id="app.dayOfWeek.saturday" defaultMessage="Sat" />,
 };
 
-const DayOfWeek = ({ dow }) => <>{DAYS[dow] || '???'}</>;
+const DayOfWeek = ({ dow }) => <>{DAYS[dow] || ''}</>;
 
 DayOfWeek.propTypes = {
   dow: PropTypes.number.isRequired,

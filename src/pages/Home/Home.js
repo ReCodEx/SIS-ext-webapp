@@ -8,14 +8,15 @@ import { Link } from 'react-router-dom';
 
 import Page from '../../components/layout/Page';
 import Icon, {
+  GroupFocusIcon,
   HomeIcon,
+  JoinGroupIcon,
   LinkIcon,
   LoadingIcon,
   ReturnIcon,
   UserProfileIcon,
   TermIcon,
   WarningIcon,
-  JoinGroupIcon,
 } from '../../components/icons';
 import Callout from '../../components/widgets/Callout';
 
@@ -27,7 +28,7 @@ import { loggedInUserIdSelector } from '../../redux/selectors/auth.js';
 
 import { getReturnUrl, setReturnUrl } from '../../helpers/localStorage.js';
 import { knownLocalesNames } from '../../helpers/localizedData.js';
-import { isStudentRole, isSuperadminRole } from '../../components/helpers/usersRoles.js';
+import { isStudentRole, isSupervisorRole, isSuperadminRole } from '../../components/helpers/usersRoles.js';
 import withLinks from '../../helpers/withLinks.js';
 
 class Home extends Component {
@@ -83,7 +84,7 @@ class Home extends Component {
     const {
       loggedInUser,
       params: { token = null },
-      links: { USER_URI, TERMS_URI, GROUPS_STUDENT_URI },
+      links: { USER_URI, TERMS_URI, GROUPS_STUDENT_URI, GROUPS_TEACHER_URI },
     } = this.props;
 
     return (
@@ -176,6 +177,31 @@ class Home extends Component {
                   </Row>
                 )}
 
+                {isSupervisorRole(user.role) && (
+                  <Row className="mb-4">
+                    <Col xs={false} sm="auto">
+                      <h3>
+                        <GroupFocusIcon gapLeft={2} gapRight={2} fixedWidth className="text-body-secondary" />
+                      </h3>
+                    </Col>
+                    <Col xs={12} sm>
+                      <h3>
+                        <Link to={GROUPS_TEACHER_URI} className="link-body-emphasis">
+                          <FormattedMessage id="app.sidebar.menu.groupsTeacher" defaultMessage="Create Groups" />
+                          <LinkIcon gapLeft={3} />
+                        </Link>
+                      </h3>
+
+                      <p>
+                        <FormattedMessage
+                          id="app.homepage.groupsTeacherPage"
+                          defaultMessage="Create or bind groups for your courses in SIS."
+                        />
+                      </p>
+                    </Col>
+                  </Row>
+                )}
+
                 {isSuperadminRole(user.role) && (
                   <Row className="mb-4">
                     <Col xs={false} sm="auto">
@@ -200,26 +226,6 @@ class Home extends Component {
                     </Col>
                   </Row>
                 )}
-
-                <Row>
-                  <Col xs={false} sm="auto">
-                    <h3>
-                      <Icon icon="person-digging" gapLeft={2} gapRight={2} fixedWidth className="text-body-secondary" />
-                    </h3>
-                  </Col>
-                  <Col xs={12} sm>
-                    <h3>
-                      <FormattedMessage id="app.homepage.workInProgress" defaultMessage="More features comming..." />
-                    </h3>
-
-                    <p>
-                      <FormattedMessage
-                        id="app.homepage.workInProgressDescription"
-                        defaultMessage="More features are being prepared, most notably the group integration which is currently embedded directly in ReCodEx."
-                      />
-                    </p>
-                  </Col>
-                </Row>
 
                 <hr className="my-4" />
 

@@ -25,7 +25,7 @@ const Sidebar = ({
   pendingFetchOperations,
   loggedInUser,
   currentUrl,
-  links: { HOME_URI, USER_URI, TERMS_URI, GROUPS_STUDENT_URI },
+  links: { HOME_URI, USER_URI, TERMS_URI, GROUPS_STUDENT_URI, GROUPS_TEACHER_URI },
 }) => {
   const user = getUserData(loggedInUser);
 
@@ -82,7 +82,15 @@ const Sidebar = ({
                       link={GROUPS_STUDENT_URI}
                     />
                   )}
-                  {isSupervisorRole(user.role) && <></>}
+
+                  {isSupervisorRole(user.role) && (
+                    <MenuItem
+                      title={<FormattedMessage id="app.sidebar.menu.groupsTeacher" defaultMessage="Create Groups" />}
+                      icon="users-viewfinder"
+                      currentPath={currentUrl}
+                      link={GROUPS_TEACHER_URI}
+                    />
+                  )}
                   {isSuperadminRole(user.role) && <></>}
 
                   <MenuItem
