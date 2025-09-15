@@ -18,9 +18,9 @@ import { fetchUser, fetchUserIfNeeded } from '../../redux/modules/users.js';
 import { fetchAllTerms } from '../../redux/modules/terms.js';
 import { loggedInUserIdSelector } from '../../redux/selectors/auth.js';
 import {
-  studentCoursesSelector,
-  getStudentCoursesRefetchedSelector,
-  allStudentCoursesReadySelector,
+  studentSisEventsSelector,
+  getStudentSisEventsRefetchedSelector,
+  allStudentSisEventsReadySelector,
 } from '../../redux/selectors/courses.js';
 import { getGroups } from '../../redux/selectors/groups.js';
 import { termsSelector } from '../../redux/selectors/terms.js';
@@ -170,7 +170,7 @@ class GroupsStudent extends Component {
                         collapsable
                         isOpen={idx === 0}>
                         <CoursesGroupsList
-                          courses={coursesSelector(term.year, term.term)}
+                          sisEvents={coursesSelector(term.year, term.term)}
                           groups={groups}
                           allowHiding
                           joinGroup={joinGroup}
@@ -219,9 +219,9 @@ export default connect(
     loggedInUserId: loggedInUserIdSelector(state),
     loggedInUser: loggedInUserSelector(state),
     terms: termsSelector(state),
-    coursesSelector: studentCoursesSelector(state),
-    coursesRefetchedSelector: getStudentCoursesRefetchedSelector(state),
-    allStudentCoursesReady: allStudentCoursesReadySelector(state),
+    coursesSelector: studentSisEventsSelector(state),
+    coursesRefetchedSelector: getStudentSisEventsRefetchedSelector(state),
+    allStudentCoursesReady: allStudentSisEventsReadySelector(state),
     groups: getGroups(state),
   }),
   dispatch => ({

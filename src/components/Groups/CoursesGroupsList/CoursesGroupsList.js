@@ -3,13 +3,15 @@ import PropTypes from 'prop-types';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import { FormattedMessage, injectIntl } from 'react-intl';
 import { lruMemoize } from 'reselect';
-import { Badge, Button } from 'react-bootstrap';
+import { Badge } from 'react-bootstrap';
 
 import ResourceRenderer from '../../helpers/ResourceRenderer';
 import DayOfWeek from '../../widgets/DayOfWeek';
 import {
+  AddIcon,
   AddUserIcon,
   AdminRoleIcon,
+  BindIcon,
   GroupIcon,
   LabsIcon,
   LectureIcon,
@@ -18,11 +20,12 @@ import {
   ObserverIcon,
   SupervisorIcon,
   StudentsIcon,
+  UnbindIcon,
   VisibleIcon,
 } from '../../icons';
 
 import './CoursesGroupsList.css';
-import { TheButtonGroup } from '../../widgets/TheButton';
+import Button, { TheButtonGroup } from '../../widgets/TheButton';
 import { Link } from 'react-router';
 import {
   recodexGroupAssignmentsLink,
@@ -40,7 +43,7 @@ const getTimeStr = minutes =>
 
 /**
  * Retrieve course name in the given locale (with fallbacks).
- * @param {Object} course
+ * @param {Object} sisEvent (with course sub-object)
  * @param {String} locale
  * @returns {String}
  */
@@ -50,35 +53,66 @@ const getCourseName = ({ course }, locale) => {
 };
 
 /**
- * Retrieve full (hierarchical) group name in the given locale (with fallbacks).
- * @param {String} groupId
- * @param {Object} groups
- * @param {String} locale
- * @returns {String}
- */
-const getGroupName = (groupId, groups, locale) => {
-  let group = groups[groupId];
-  const names = [];
-  while (group && group.parentGroupId) {
-    const name = group.name?.[locale] || group.name?.en || group.name?.cs || '???';
-    names.unshift(name);
-    group = groups[group.parentGroupId];
-  }
-  return names.join(' > ');
-};
-
-/**
- * Return augmented courses (with localized fullName) sorted by their fullName.
- * @param {Array} courses
+ * Return augmented sisEvents (with localized fullName) sorted by their fullName.
+ * @param {Array} sisEvents
  * @param {String} locale
  * @returns {Array}
  */
-const getSortedCourses = lruMemoize((courses, locale) =>
-  courses
-    .map(course => ({ ...course, fullName: getCourseName(course, locale) }))
+const getSortedSisEvents = lruMemoize((sisEvents, locale) =>
+  sisEvents
+    .map(event => ({ ...event, fullName: getCourseName(event, locale) }))
     .sort((a, b) => a.fullName.localeCompare(b.fullName, locale))
 );
 
+const augmentGroupObject = (groups, id, locale) => {
+  const group = groups[id];
+  if (group && !('fullName' in group)) {
+    if (group.parentGroupId) {
+      // handle ancestors recursively
+      augmentGroupObject(groups, group.parentGroupId, locale);
+
+      // use the parent to update our values
+      group.fullName = groups[group.parentGroupId].fullName || '';
+      if (group.fullName) {
+        group.fullName += ' ❭ ';
+      }
+      group.fullName += group.name?.[locale] || group.name?.en || group.name?.cs || '???';
+      group.isAdmin = groups[group.parentGroupId].isAdmin || group.membership === 'admin';
+    } else {
+      // root group has special treatment
+      groups[id].fullName = '';
+      groups[id].isAdmin = false;
+    }
+  }
+};
+
+/**
+ * Preprocessing function that returns a sorted array of all groups
+ * (augmented with localized fullName and isAdmin flag).
+ * @param {Object} groups
+ * @param {String} locale
+ * @returns {Array}
+ */
+const getGroups = lruMemoize((groups, locale) => {
+  // make a copy of groups so we can augment it
+  const result = {};
+  Object.keys(groups).forEach(id => {
+    result[id] = { ...groups[id] };
+  });
+
+  Object.keys(result).forEach(id => {
+    if (!result[id].fullName) {
+      augmentGroupObject(result, id, locale);
+    }
+  });
+
+  return Object.values(result).sort((a, b) => a.fullName.localeCompare(b.fullName, locale));
+});
+
+const getAttrValues = (group, key) => {
+  const values = group?.attributes?.[key];
+  return Array.isArray(values) ? values : []; // ensure we always return an array
+};
 /**
  * Construct a structure of sisId => [groups] where each group is augmented with localized fullName.
  * Each list of groups is sorted by their fullName.
@@ -88,32 +122,79 @@ const getSortedCourses = lruMemoize((courses, locale) =>
  */
 const getSisGroups = lruMemoize((groups, locale) => {
   const sisGroups = {};
-  Object.values(groups).forEach(group => {
-    const sisIds = group?.attributes?.group || [];
-    if (Array.isArray(sisIds) && sisIds.length > 0) {
-      // we make a copy of the group so we can augment it with localized fullName
-      const groupCopy = { ...group, fullName: getGroupName(group.id, groups, locale) };
-      sisIds.forEach(sisId => {
-        if (!sisGroups[sisId]) {
-          sisGroups[sisId] = [];
-        }
-        sisGroups[sisId].push(groupCopy);
-      });
-    }
+  getGroups(groups, locale).forEach(group => {
+    getAttrValues(group, 'group').forEach(sisId => {
+      if (!sisGroups[sisId]) {
+        sisGroups[sisId] = [];
+      }
+      sisGroups[sisId].push(group); // groups are already sorted, push preserves the order
+    });
   });
-
-  // sort groups for each sisId by their fullName
-  Object.values(sisGroups).forEach(groupsForSisId => {
-    groupsForSisId.sort((a, b) => a.fullName.localeCompare(b.fullName, locale));
-  });
-
   return sisGroups;
 });
 
-/*
- * Component displaying list of courses (with scheduling events) and their groups.
+/**
+ * Check if a group is suitable for a course in a specific term.
+ * @param {Object} sisEvent
+ * @param {Object} group
+ * @param {Object} groups map of all groups (to access ancestors), keys are group ids
+ * @returns {Boolean} true if the group is suitable for binding to the course
  */
-const CoursesGroupsList = ({ courses, groups, allowHiding = false, joinGroup = null, intl: { locale } }) => {
+const isSuitableForCourse = (sisEvent, group, groups) => {
+  const courseCode = sisEvent?.course?.code;
+  if (!courseCode || !sisEvent?.year || !sisEvent?.term) {
+    return false;
+  }
+  const termKey = `${sisEvent.year}-${sisEvent.term}`;
+
+  if (getAttrValues(group, 'group').includes(sisEvent.sisId)) {
+    return false; // already bound to this event
+  }
+  let courseCovered = false;
+  let termCovered = false;
+
+  while (group && (!courseCovered || !termCovered)) {
+    courseCovered = courseCovered || getAttrValues(group, 'course').includes(courseCode);
+    termCovered = termCovered || getAttrValues(group, 'term').includes(termKey);
+    group = groups[group.parentGroupId];
+  }
+
+  return courseCovered && termCovered;
+};
+
+const getParentCandidates = lruMemoize((sisEvent, groups, locale) => {
+  getGroups(groups, locale).filter(group => isSuitableForCourse(sisEvent, group, groups));
+});
+
+/**
+ * Get a sorted list of groups suitable for binding to the given course in the given term.
+ * @param {Object} sisEvent
+ * @param {Object} groups
+ * @param {String} locale
+ * @returns {Array} list of suitable group objects (augmented with localized fullName and isAdmin flag)
+ */
+const getBindingCandidates = lruMemoize((sisEvent, groups, locale) =>
+  getGroups(groups, locale).filter(
+    group =>
+      !group.organizational &&
+      (group.isAdmin || group.membership === 'supervisor') &&
+      isSuitableForCourse(sisEvent, group, groups)
+  )
+);
+
+/*
+ * Component displaying list of sisEvents (with scheduling events) and their groups.
+ */
+const CoursesGroupsList = ({
+  sisEvents,
+  groups,
+  allowHiding = false,
+  joinGroup = null,
+  bind = null,
+  unbind = null,
+  create = null,
+  intl: { locale },
+}) => {
   const [showAllState, setShowAll] = useState(false);
   const showAll = allowHiding ? showAllState : true;
 
@@ -123,9 +204,9 @@ const CoursesGroupsList = ({ courses, groups, allowHiding = false, joinGroup = n
         const sisGroups = getSisGroups(groups || {}, locale);
 
         return (
-          <ResourceRenderer resource={courses}>
-            {courses => {
-              if (!courses || courses.length === 0) {
+          <ResourceRenderer resource={sisEvents}>
+            {sisEvents => {
+              if (!sisEvents || sisEvents.length === 0) {
                 return (
                   <div className="m-3 text-center text-muted">
                     <FormattedMessage
@@ -136,36 +217,36 @@ const CoursesGroupsList = ({ courses, groups, allowHiding = false, joinGroup = n
                 );
               }
 
-              const sortedCourses = getSortedCourses(courses, locale);
-              const filteredCourses = sortedCourses.filter(course => sisGroups[course.sisId]?.length > 0);
+              const sortedSisEvents = getSortedSisEvents(sisEvents, locale);
+              const filteredSisEvents = sortedSisEvents.filter(sisEvent => sisGroups[sisEvent.sisId]?.length > 0);
 
               return (
                 <>
                   <table
-                    className={`coursesGroupsList ${allowHiding && filteredCourses.length < sortedCourses.length ? 'mb-3' : ''}`}>
-                    {(showAll ? sortedCourses : filteredCourses).map(course => (
-                      <tbody key={course.id}>
+                    className={`coursesGroupsList ${allowHiding && filteredSisEvents.length < sortedSisEvents.length ? 'mb-3' : ''}`}>
+                    {(showAll ? sortedSisEvents : filteredSisEvents).map(sisEvent => (
+                      <tbody key={sisEvent.id}>
                         <tr>
                           <td className="text-muted text-nowrap">
-                            {course.type === 'lecture' && (
+                            {sisEvent.type === 'lecture' && (
                               <LectureIcon
                                 tooltip={
                                   <FormattedMessage id="app.coursesGroupsList.lecture" defaultMessage="Lecture" />
                                 }
-                                tooltipId={course.id}
+                                tooltipId={sisEvent.id}
                                 tooltipPlacement="bottom"
                               />
                             )}
-                            {course.type === 'labs' && (
+                            {sisEvent.type === 'labs' && (
                               <LabsIcon
                                 tooltip={<FormattedMessage id="app.coursesGroupsList.labs" defaultMessage="Labs" />}
-                                tooltipId={course.id}
+                                tooltipId={sisEvent.id}
                                 tooltipPlacement="bottom"
                               />
                             )}
                           </td>
 
-                          {course.dayOfWeek === null && course.time === null ? (
+                          {sisEvent.dayOfWeek === null && sisEvent.time === null ? (
                             <td colSpan={3} className="text-nowrap text-muted small text-center fw-italic">
                               (
                               <FormattedMessage
@@ -177,14 +258,14 @@ const CoursesGroupsList = ({ courses, groups, allowHiding = false, joinGroup = n
                           ) : (
                             <>
                               <td className="text-nowrap fw-bold">
-                                <DayOfWeek dow={course.dayOfWeek} />
+                                <DayOfWeek dow={sisEvent.dayOfWeek} />
                               </td>
-                              <td className="text-nowrap fw-bold">{getTimeStr(course.time)}</td>
+                              <td className="text-nowrap fw-bold">{getTimeStr(sisEvent.time)}</td>
                               <td className="text-nowrap text-muted">
-                                {course.fortnight && (
+                                {sisEvent.fortnight && (
                                   <>
                                     (
-                                    {course.firstWeek % 2 === 1 ? (
+                                    {sisEvent.firstWeek % 2 === 1 ? (
                                       <FormattedMessage
                                         id="app.coursesGroupsList.firstWeekOdd"
                                         defaultMessage="odd weeks"
@@ -202,15 +283,38 @@ const CoursesGroupsList = ({ courses, groups, allowHiding = false, joinGroup = n
                             </>
                           )}
 
-                          <td className="text-nowrap fw-bold">{course.room}</td>
-                          <td className="text-nowrap fw-bold">{course.fullName}</td>
+                          <td className="text-nowrap fw-bold">{sisEvent.room}</td>
+                          <td className="text-nowrap fw-bold">{sisEvent.fullName}</td>
                           <td className="w-100 text-nowrap">
-                            <Badge bg="secondary"> {course.sisId}</Badge>
+                            <Badge bg="secondary"> {sisEvent.sisId}</Badge>
                           </td>
-                          <td />
+                          <td>
+                            {create && (
+                              <Button
+                                variant="success"
+                                size="xs"
+                                onClick={() => create(sisEvent.sisId, getParentCandidates(sisEvent, groups, locale))}>
+                                <AddIcon gapRight />
+                                <FormattedMessage id="app.coursesGroupsList.create" defaultMessage="Create New Group" />
+                              </Button>
+                            )}
+                            {bind && (
+                              <Button
+                                variant="success"
+                                size="xs"
+                                onClick={() => bind(sisEvent.sisId, getBindingCandidates(sisEvent, groups, locale))}
+                                className="ms-2">
+                                <BindIcon gapRight />
+                                <FormattedMessage
+                                  id="app.coursesGroupsList.bind"
+                                  defaultMessage="Bind Existing Group"
+                                />
+                              </Button>
+                            )}
+                          </td>
                         </tr>
 
-                        {sisGroups[course.sisId]?.map(group => (
+                        {sisGroups[sisEvent.sisId]?.map(group => (
                           <tr key={group.id}>
                             <td colSpan={3} className="text-end text-muted">
                               {group.membership === 'admin' && (
@@ -323,16 +427,39 @@ const CoursesGroupsList = ({ courses, groups, allowHiding = false, joinGroup = n
                                       </Link>
                                     )}
 
-                                  {recodexGroupEditLink(group.id) && group.membership === 'admin' && (
-                                    <Link to={recodexGroupEditLink(group.id)}>
-                                      <Button variant="warning" size="xs">
-                                        <LinkIcon gapRight />
-                                        <FormattedMessage
-                                          id="app.coursesGroupsList.recodexGroupEdit"
-                                          defaultMessage="Edit Group"
-                                        />
-                                      </Button>
-                                    </Link>
+                                  {(group.isAdmin || group.membership === 'supervisor') && (
+                                    <>
+                                      {recodexGroupEditLink(group.id) && (
+                                        <Link to={recodexGroupEditLink(group.id)}>
+                                          <Button variant="warning" size="xs">
+                                            <LinkIcon gapRight />
+                                            <FormattedMessage
+                                              id="app.coursesGroupsList.recodexGroupEdit"
+                                              defaultMessage="Edit Group"
+                                            />
+                                          </Button>
+                                        </Link>
+                                      )}
+                                      {unbind && (
+                                        <Button
+                                          variant="danger"
+                                          size="xs"
+                                          onClick={() => unbind(group.id, sisEvent.sisId)}
+                                          confirmId={`unbind-${group.id}-${sisEvent.sisId}`}
+                                          confirm={
+                                            <FormattedMessage
+                                              id="app.coursesGroupsList.unbindConfirm"
+                                              defaultMessage="Do you really want to unbind the course from this group? The group will remain unchanged, but the students will no longer be able to join it via SIS-CodEx extension."
+                                            />
+                                          }>
+                                          <UnbindIcon gapRight />
+                                          <FormattedMessage
+                                            id="app.coursesGroupsList.unbind"
+                                            defaultMessage="Unbind Group"
+                                          />
+                                        </Button>
+                                      )}
+                                    </>
                                   )}
                                 </TheButtonGroup>
                               )}
@@ -343,12 +470,12 @@ const CoursesGroupsList = ({ courses, groups, allowHiding = false, joinGroup = n
                     ))}
                   </table>
 
-                  {allowHiding && filteredCourses.length < sortedCourses.length && (
+                  {allowHiding && filteredSisEvents.length < sortedSisEvents.length && (
                     <div className="text-center text-muted small m-2">
                       <FormattedMessage
                         id="app.coursesGroupsList.infoCoursesWithoutGroups"
                         defaultMessage="You are enrolled for {count} {count, plural, one {course} other {courses}} which do not have any groups yet."
-                        values={{ count: sortedCourses.length - filteredCourses.length }}
+                        values={{ count: sortedSisEvents.length - filteredSisEvents.length }}
                       />
 
                       <Button variant="primary" size="xs" className="ms-3" onClick={() => setShowAll(!showAll)}>
@@ -378,10 +505,13 @@ const CoursesGroupsList = ({ courses, groups, allowHiding = false, joinGroup = n
 };
 
 CoursesGroupsList.propTypes = {
-  courses: ImmutablePropTypes.list,
+  sisEvents: ImmutablePropTypes.list,
   groups: ImmutablePropTypes.map,
   allowHiding: PropTypes.bool,
   joinGroup: PropTypes.func,
+  bind: PropTypes.func,
+  unbind: PropTypes.func,
+  create: PropTypes.func,
   intl: PropTypes.shape({ locale: PropTypes.string.isRequired }).isRequired,
 };
 

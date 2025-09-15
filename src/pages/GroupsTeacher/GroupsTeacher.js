@@ -9,7 +9,7 @@ import Page from '../../components/layout/Page';
 import Box from '../../components/widgets/Box';
 import CoursesGroupsList from '../../components/Groups/CoursesGroupsList';
 import Button from '../../components/widgets/TheButton';
-import { DownloadIcon, JoinGroupIcon, LoadingIcon, RefreshIcon, TermIcon } from '../../components/icons';
+import { DownloadIcon, GroupFocusIcon, LoadingIcon, RefreshIcon, TermIcon } from '../../components/icons';
 import ResourceRenderer from '../../components/helpers/ResourceRenderer';
 
 import { fetchTeacherCourses } from '../../redux/modules/courses.js';
@@ -18,9 +18,9 @@ import { fetchUser, fetchUserIfNeeded } from '../../redux/modules/users.js';
 import { fetchAllTerms } from '../../redux/modules/terms.js';
 import { loggedInUserIdSelector } from '../../redux/selectors/auth.js';
 import {
-  teacherCoursesSelector,
-  getTeacherCoursesRefetchedSelector,
-  allTeacherCoursesReadySelector,
+  teacherSisEventsSelector,
+  getTeacherSisEventsRefetchedSelector,
+  allTeacherSisEventsReadySelector,
 } from '../../redux/selectors/courses.js';
 import { getGroups } from '../../redux/selectors/groups.js';
 import { termsSelector } from '../../redux/selectors/terms.js';
@@ -108,7 +108,7 @@ class GroupsTeacher extends Component {
     return (
       <Page
         resource={loggedInUser}
-        icon={<JoinGroupIcon />}
+        icon={<GroupFocusIcon />}
         title={<FormattedMessage id="app.groupsTeacher.title" defaultMessage="Create Groups for SIS Courses" />}>
         {user =>
           isSupervisorRole(user.role) ? (
@@ -175,7 +175,7 @@ class GroupsTeacher extends Component {
                         unlimitedHeight
                         collapsable
                         isOpen={idx === 0}>
-                        <CoursesGroupsList courses={coursesSelector(term.year, term.term)} groups={groups} />
+                        <CoursesGroupsList sisEvents={coursesSelector(term.year, term.term)} groups={groups} />
                       </Box>
                     ))
                   ) : (
@@ -219,9 +219,9 @@ export default connect(
     loggedInUserId: loggedInUserIdSelector(state),
     loggedInUser: loggedInUserSelector(state),
     terms: termsSelector(state),
-    coursesSelector: teacherCoursesSelector(state),
-    coursesRefetchedSelector: getTeacherCoursesRefetchedSelector(state),
-    allTeacherCoursesReady: allTeacherCoursesReadySelector(state),
+    coursesSelector: teacherSisEventsSelector(state),
+    coursesRefetchedSelector: getTeacherSisEventsRefetchedSelector(state),
+    allTeacherCoursesReady: allTeacherSisEventsReadySelector(state),
     groups: getGroups(state),
   }),
   dispatch => ({
