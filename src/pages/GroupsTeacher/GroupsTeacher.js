@@ -2,18 +2,27 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import { connect } from 'react-redux';
+import { Modal } from 'react-bootstrap';
 import { FormattedMessage } from 'react-intl';
 import { lruMemoize } from 'reselect';
 
 import Page from '../../components/layout/Page';
 import Box from '../../components/widgets/Box';
 import CoursesGroupsList from '../../components/Groups/CoursesGroupsList';
-import Button from '../../components/widgets/TheButton';
-import { DownloadIcon, GroupFocusIcon, LoadingIcon, RefreshIcon, TermIcon } from '../../components/icons';
+import Button, { TheButtonGroup } from '../../components/widgets/TheButton';
+import {
+  CloseIcon,
+  DownloadIcon,
+  GroupFocusIcon,
+  LoadingIcon,
+  RefreshIcon,
+  SuccessIcon,
+  TermIcon,
+} from '../../components/icons';
 import ResourceRenderer from '../../components/helpers/ResourceRenderer';
 
 import { fetchTeacherCourses } from '../../redux/modules/courses.js';
-import { fetchTeacherGroups } from '../../redux/modules/groups.js';
+import { fetchTeacherGroups, bindGroup, unbindGroup } from '../../redux/modules/groups.js';
 import { fetchUser, fetchUserIfNeeded } from '../../redux/modules/users.js';
 import { fetchAllTerms } from '../../redux/modules/terms.js';
 import { loggedInUserIdSelector } from '../../redux/selectors/auth.js';
@@ -57,7 +66,38 @@ const getAllSisIds = results => {
   return [Array.from(eventIds), Array.from(courseIds)];
 };
 
+const getGroupAdmins = group => {
+  const res = Object.values(group.admins)
+    .map(admin => admin.lastName)
+    .join(', ');
+  return res ? ` [${res}]` : '';
+};
+
 class GroupsTeacher extends Component {
+  state = { bindEvent: null, createEvent: null, selectGroups: null, selectedGroupId: '' };
+
+  startBind = (bindEvent, selectGroups) => this.setState({ bindEvent, selectGroups });
+  startCreate = (createEvent, selectGroups) => this.setState({ createEvent, selectGroups });
+  closeModal = () => this.setState({ bindEvent: null, createEvent: null, selectGroups: null, selectedGroupId: '' });
+  handleGroupChange = ev => this.setState({ selectedGroupId: ev.target.value });
+
+  completeModalOperation = () => {
+    const { loggedInUserId, bind, loadAsync } = this.props;
+
+    if (this.state.bindEvent !== null) {
+      bind(this.state.selectedGroupId, this.state.bindEvent.id)
+        .then(() => loadAsync(loggedInUserId))
+        .then(this.closeModal);
+    } else {
+      this.closeModal();
+    }
+  };
+
+  unbindAndReload = (groupId, eventId) => {
+    const { loggedInUserId, unbind, loadAsync } = this.props;
+    unbind(groupId, eventId).then(() => loadAsync(loggedInUserId));
+  };
+
   componentDidMount() {
     this.props.loadAsync(this.props.loggedInUserId);
   }
@@ -94,15 +134,7 @@ class GroupsTeacher extends Component {
     ]);
 
   render() {
-    const {
-      loggedInUser,
-      terms,
-      coursesSelector,
-      coursesRefetchedSelector,
-      allTeacherCoursesReady,
-      groups,
-      loadAsync,
-    } = this.props;
+    const { loggedInUser, terms, sisEventsSelector, refetchedSelector, allReady, groups, loadAsync } = this.props;
     const userReady = isReady(loggedInUser);
 
     return (
@@ -120,9 +152,9 @@ class GroupsTeacher extends Component {
                       variant="primary"
                       size="sm"
                       className="float-end"
-                      disabled={!userReady || !allTeacherCoursesReady}
+                      disabled={!userReady || !allReady}
                       onClick={() => loadAsync(user.id, 0)}>
-                      {userReady && allTeacherCoursesReady ? <RefreshIcon gapRight /> : <LoadingIcon gapRight />}
+                      {userReady && allReady ? <RefreshIcon gapRight /> : <LoadingIcon gapRight />}
                       <FormattedMessage id="app.groups.refreshButton" defaultMessage="Reload from SIS" />
                     </Button>
                     <FormattedMessage
@@ -156,7 +188,7 @@ class GroupsTeacher extends Component {
                               )}
                               )
                             </small>
-                            {coursesRefetchedSelector(term.year, term.term) && (
+                            {refetchedSelector(term.year, term.term) && (
                               <DownloadIcon
                                 gapLeft={3}
                                 className="text-success"
@@ -175,7 +207,13 @@ class GroupsTeacher extends Component {
                         unlimitedHeight
                         collapsable
                         isOpen={idx === 0}>
-                        <CoursesGroupsList sisEvents={coursesSelector(term.year, term.term)} groups={groups} />
+                        <CoursesGroupsList
+                          sisEvents={sisEventsSelector(term.year, term.term)}
+                          groups={groups}
+                          bind={this.startBind}
+                          unbind={this.unbindAndReload}
+                          create={this.startCreate}
+                        />
                       </Box>
                     ))
                   ) : (
@@ -186,6 +224,71 @@ class GroupsTeacher extends Component {
                       />
                     </Callout>
                   )}
+
+                  <Modal
+                    show={this.state.bindEvent !== null || this.state.createEvent !== null}
+                    backdrop="static"
+                    size="xl"
+                    onHide={this.closeModal}>
+                    <Modal.Header closeButton>
+                      <Modal.Title>
+                        {this.state.bindEvent !== null && (
+                          <FormattedMessage
+                            id="app.groupsTeacher.selectGroupForBinding"
+                            defaultMessage="Select Group for Binding with {bindEvent}"
+                            values={{ bindEvent: this.state.bindEvent.sisId }}
+                          />
+                        )}
+                        {this.state.createEvent !== null && (
+                          <FormattedMessage
+                            id="app.groupsTeacher.selectParentGroupForCreating"
+                            defaultMessage="Select Parent Group for New Group of {createEvent}"
+                            values={{ createEvent: this.state.createEvent.sisId }}
+                          />
+                        )}
+                      </Modal.Title>
+                    </Modal.Header>
+
+                    <Modal.Body>
+                      <select value={this.state.selectedGroupId} onChange={this.handleGroupChange}>
+                        <option value="">...</option>
+                        {this.state.selectGroups?.map(group => (
+                          <option key={group.id} value={group.id}>
+                            {group.fullName}&nbsp;&nbsp;
+                            {getGroupAdmins(group)}
+                          </option>
+                        ))}
+                      </select>
+                    </Modal.Body>
+
+                    <Modal.Footer>
+                      <div className="text-center w-100">
+                        <TheButtonGroup>
+                          <Button
+                            variant="success"
+                            disabled={!this.state.selectedGroupId}
+                            onClick={this.completeModalOperation}>
+                            <SuccessIcon gapRight />
+                            {this.state.bindEvent !== null ? (
+                              <FormattedMessage
+                                id="app.groupsTeacher.confirmButtonBind"
+                                defaultMessage="Bind with Group"
+                              />
+                            ) : (
+                              <FormattedMessage
+                                id="app.groupsTeacher.confirmButtonCreate"
+                                defaultMessage="Create Group"
+                              />
+                            )}
+                          </Button>
+                          <Button variant="secondary" onClick={this.closeModal}>
+                            <CloseIcon gapRight />
+                            <FormattedMessage id="generic.cancel" defaultMessage="Cancel" />
+                          </Button>
+                        </TheButtonGroup>
+                      </div>
+                    </Modal.Footer>
+                  </Modal>
                 </>
               )}
             </ResourceRenderer>
@@ -207,11 +310,13 @@ GroupsTeacher.propTypes = {
   loggedInUserId: PropTypes.string,
   loggedInUser: ImmutablePropTypes.map,
   terms: ImmutablePropTypes.list,
-  coursesSelector: PropTypes.func,
-  coursesRefetchedSelector: PropTypes.func,
-  allTeacherCoursesReady: PropTypes.bool,
+  sisEventsSelector: PropTypes.func,
+  refetchedSelector: PropTypes.func,
+  allReady: PropTypes.bool,
   groups: ImmutablePropTypes.map,
   loadAsync: PropTypes.func.isRequired,
+  bind: PropTypes.func.isRequired,
+  unbind: PropTypes.func.isRequired,
 };
 
 export default connect(
@@ -219,12 +324,14 @@ export default connect(
     loggedInUserId: loggedInUserIdSelector(state),
     loggedInUser: loggedInUserSelector(state),
     terms: termsSelector(state),
-    coursesSelector: teacherSisEventsSelector(state),
-    coursesRefetchedSelector: getTeacherSisEventsRefetchedSelector(state),
-    allTeacherCoursesReady: allTeacherSisEventsReadySelector(state),
+    sisEventsSelector: teacherSisEventsSelector(state),
+    refetchedSelector: getTeacherSisEventsRefetchedSelector(state),
+    allReady: allTeacherSisEventsReadySelector(state),
     groups: getGroups(state),
   }),
   dispatch => ({
     loadAsync: (userId, expiration = DEFAULT_EXPIRATION) => GroupsTeacher.loadAsync({ userId }, dispatch, expiration),
+    bind: (groupId, eventId) => dispatch(bindGroup(groupId, eventId)),
+    unbind: (groupId, eventId) => dispatch(unbindGroup(groupId, eventId)),
   })
 )(GroupsTeacher);
