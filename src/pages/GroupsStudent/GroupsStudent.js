@@ -87,16 +87,8 @@ class GroupsStudent extends Component {
     ]);
 
   render() {
-    const {
-      loggedInUser,
-      terms,
-      coursesSelector,
-      coursesRefetchedSelector,
-      allStudentCoursesReady,
-      groups,
-      joinGroup,
-      loadAsync,
-    } = this.props;
+    const { loggedInUser, terms, sisEventsSelector, refetchedSelector, allReady, groups, joinGroup, loadAsync } =
+      this.props;
     const userReady = isReady(loggedInUser);
 
     return (
@@ -114,9 +106,9 @@ class GroupsStudent extends Component {
                       variant="primary"
                       size="sm"
                       className="float-end"
-                      disabled={!userReady || !allStudentCoursesReady}
+                      disabled={!userReady || !allReady}
                       onClick={() => loadAsync(user.id, 0)}>
-                      {userReady && allStudentCoursesReady ? <RefreshIcon gapRight /> : <LoadingIcon gapRight />}
+                      {userReady && allReady ? <RefreshIcon gapRight /> : <LoadingIcon gapRight />}
                       <FormattedMessage id="app.groups.refreshButton" defaultMessage="Reload from SIS" />
                     </Button>
                     <FormattedMessage
@@ -150,7 +142,7 @@ class GroupsStudent extends Component {
                               )}
                               )
                             </small>
-                            {coursesRefetchedSelector(term.year, term.term) && (
+                            {refetchedSelector(term.year, term.term) && (
                               <DownloadIcon
                                 gapLeft={3}
                                 className="text-success"
@@ -170,7 +162,7 @@ class GroupsStudent extends Component {
                         collapsable
                         isOpen={idx === 0}>
                         <CoursesGroupsList
-                          sisEvents={coursesSelector(term.year, term.term)}
+                          sisEvents={sisEventsSelector(term.year, term.term)}
                           groups={groups}
                           allowHiding
                           joinGroup={joinGroup}
@@ -206,9 +198,9 @@ GroupsStudent.propTypes = {
   loggedInUserId: PropTypes.string,
   loggedInUser: ImmutablePropTypes.map,
   terms: ImmutablePropTypes.list,
-  coursesSelector: PropTypes.func,
-  coursesRefetchedSelector: PropTypes.func,
-  allStudentCoursesReady: PropTypes.bool,
+  sisEventsSelector: PropTypes.func,
+  refetchedSelector: PropTypes.func,
+  allReady: PropTypes.bool,
   groups: ImmutablePropTypes.map,
   loadAsync: PropTypes.func.isRequired,
   joinGroup: PropTypes.func.isRequired,
@@ -219,9 +211,9 @@ export default connect(
     loggedInUserId: loggedInUserIdSelector(state),
     loggedInUser: loggedInUserSelector(state),
     terms: termsSelector(state),
-    coursesSelector: studentSisEventsSelector(state),
-    coursesRefetchedSelector: getStudentSisEventsRefetchedSelector(state),
-    allStudentCoursesReady: allStudentSisEventsReadySelector(state),
+    sisEventsSelector: studentSisEventsSelector(state),
+    refetchedSelector: getStudentSisEventsRefetchedSelector(state),
+    allReady: allStudentSisEventsReadySelector(state),
     groups: getGroups(state),
   }),
   dispatch => ({

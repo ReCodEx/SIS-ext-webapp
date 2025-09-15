@@ -288,29 +288,33 @@ const CoursesGroupsList = ({
                           <td className="w-100 text-nowrap">
                             <Badge bg="secondary"> {sisEvent.sisId}</Badge>
                           </td>
-                          <td>
-                            {create && (
-                              <Button
-                                variant="success"
-                                size="xs"
-                                onClick={() => create(sisEvent.sisId, getParentCandidates(sisEvent, groups, locale))}>
-                                <AddIcon gapRight />
-                                <FormattedMessage id="app.coursesGroupsList.create" defaultMessage="Create New Group" />
-                              </Button>
-                            )}
-                            {bind && (
-                              <Button
-                                variant="success"
-                                size="xs"
-                                onClick={() => bind(sisEvent.sisId, getBindingCandidates(sisEvent, groups, locale))}
-                                className="ms-2">
-                                <BindIcon gapRight />
-                                <FormattedMessage
-                                  id="app.coursesGroupsList.bind"
-                                  defaultMessage="Bind Existing Group"
-                                />
-                              </Button>
-                            )}
+                          <td className="text-end text-nowrap">
+                            <TheButtonGroup>
+                              {create && (
+                                <Button
+                                  variant="success"
+                                  size="xs"
+                                  onClick={() => create(sisEvent, getParentCandidates(sisEvent, groups, locale))}>
+                                  <AddIcon gapRight />
+                                  <FormattedMessage
+                                    id="app.coursesGroupsList.create"
+                                    defaultMessage="Create New Group"
+                                  />
+                                </Button>
+                              )}
+                              {bind && (
+                                <Button
+                                  variant="success"
+                                  size="xs"
+                                  onClick={() => bind(sisEvent, getBindingCandidates(sisEvent, groups, locale))}>
+                                  <BindIcon gapRight />
+                                  <FormattedMessage
+                                    id="app.coursesGroupsList.bind"
+                                    defaultMessage="Bind Existing Group"
+                                  />
+                                </Button>
+                              )}
+                            </TheButtonGroup>
                           </td>
                         </tr>
 
@@ -373,7 +377,7 @@ const CoursesGroupsList = ({
                                   }
                                 />
                               )}
-                              {group.membership === 'joining' && <LoadingIcon gapRight />}
+                              {group.pending && <LoadingIcon gapRight />}
 
                               <GroupIcon
                                 tooltip={
@@ -387,7 +391,7 @@ const CoursesGroupsList = ({
                               {group.fullName}
                             </td>
                             <td className="text-nowrap text-end">
-                              {group.membership === 'joining' ? (
+                              {group.pending ? (
                                 <LoadingIcon />
                               ) : (
                                 <TheButtonGroup>
@@ -444,8 +448,8 @@ const CoursesGroupsList = ({
                                         <Button
                                           variant="danger"
                                           size="xs"
-                                          onClick={() => unbind(group.id, sisEvent.sisId)}
-                                          confirmId={`unbind-${group.id}-${sisEvent.sisId}`}
+                                          onClick={() => unbind(group.id, sisEvent.id)}
+                                          confirmId={`unbind-${group.id}-${sisEvent.id}`}
                                           confirm={
                                             <FormattedMessage
                                               id="app.coursesGroupsList.unbindConfirm"
