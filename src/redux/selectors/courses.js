@@ -9,30 +9,30 @@ const getTeacher = courses => courses.get('teacher');
 const studentsSelector = createSelector(getCourses, getStudent);
 const teachersSelector = createSelector(getCourses, getTeacher);
 
-export const studentCoursesSelector = createSelector(
+export const studentSisEventsSelector = createSelector(
   studentsSelector,
-  courses => (year, term) => courses.get(`${year}-${term}`)
+  events => (year, term) => events.get(`${year}-${term}`)
 );
 
-export const getStudentCoursesRefetchedSelector = createSelector(
+export const getStudentSisEventsRefetchedSelector = createSelector(
   studentsSelector,
   courses => (year, term) => courses.getIn([`${year}-${term}`, 'refetched'], false)
 );
 
-export const allStudentCoursesReadySelector = createSelector(studentsSelector, courses =>
+export const allStudentSisEventsReadySelector = createSelector(studentsSelector, courses =>
   courses.every(record => isReady(record))
 );
 
-export const teacherCoursesSelector = createSelector(
+export const teacherSisEventsSelector = createSelector(
   teachersSelector,
   courses => (year, term) => courses.get(`${year}-${term}`)
 );
 
-export const getTeacherCoursesRefetchedSelector = createSelector(
+export const getTeacherSisEventsRefetchedSelector = createSelector(
   teachersSelector,
   courses => (year, term) => courses.getIn([`${year}-${term}`, 'refetched'], false)
 );
 
-export const allTeacherCoursesReadySelector = createSelector(teachersSelector, courses =>
+export const allTeacherSisEventsReadySelector = createSelector(teachersSelector, courses =>
   courses.every(record => isReady(record))
 );
