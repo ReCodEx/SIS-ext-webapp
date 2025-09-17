@@ -29,3 +29,11 @@ export function prettyPrintPercent(percent) {
   }
   return (Math.round(percent * 1000) / 10).toString() + '%';
 }
+
+/**
+ * Convert time in minutes (from midnight) to string H:MM
+ * @param {Number} minutes
+ * @returns {String}
+ */
+export const minutesToTimeStr = minutes =>
+  minutes ? `${Math.floor(minutes / 60)}:${(minutes % 60).toString().padStart(2, '0')}` : '';
