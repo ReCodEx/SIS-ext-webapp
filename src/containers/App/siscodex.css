@@ -289,6 +289,10 @@ select.form-control.is-invalid, .was-validated select.form-control:invalid { /* 
   background-position-x: right 1.2rem;
 }
 
+table.bg-transparent td, table.bg-transparent th {
+    background: transparent !important;
+}
+
 /*
  * ACE Editor Overrides
  */

@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import { connect } from 'react-redux';
-import { Modal } from 'react-bootstrap';
+import { Modal, FormGroup, FormSelect, FormLabel, InputGroup, Badge, Table } from 'react-bootstrap';
 import { FormattedMessage } from 'react-intl';
 import { lruMemoize } from 'reselect';
 
@@ -14,6 +14,7 @@ import {
   CloseIcon,
   DownloadIcon,
   GroupFocusIcon,
+  InfoIcon,
   LoadingIcon,
   RefreshIcon,
   SuccessIcon,
@@ -38,6 +39,10 @@ import { loggedInUserSelector } from '../../redux/selectors/users.js';
 import { isSupervisorRole } from '../../components/helpers/usersRoles.js';
 import Callout from '../../components/widgets/Callout/Callout.js';
 import DateTime from '../../components/widgets/DateTime/DateTime.js';
+import InsetPanel from '../../components/widgets/InsetPanel';
+import DayOfWeek from '../../components/widgets/DayOfWeek';
+import Explanation from '../../components/widgets/Explanation';
+import { minutesToTimeStr } from '../../components/helpers/stringFormatters.js';
 
 import { isReady } from '../../redux/helpers/resourceManager';
 
@@ -235,30 +240,148 @@ class GroupsTeacher extends Component {
                         {this.state.bindEvent !== null && (
                           <FormattedMessage
                             id="app.groupsTeacher.selectGroupForBinding"
-                            defaultMessage="Select Group for Binding with {bindEvent}"
-                            values={{ bindEvent: this.state.bindEvent.sisId }}
+                            defaultMessage="Select Group for Binding"
                           />
                         )}
                         {this.state.createEvent !== null && (
                           <FormattedMessage
                             id="app.groupsTeacher.selectParentGroupForCreating"
-                            defaultMessage="Select Parent Group for New Group of {createEvent}"
-                            values={{ createEvent: this.state.createEvent.sisId }}
+                            defaultMessage="Select Parent Group for a New Group"
                           />
                         )}
                       </Modal.Title>
                     </Modal.Header>
 
                     <Modal.Body>
-                      <select value={this.state.selectedGroupId} onChange={this.handleGroupChange}>
-                        <option value="">...</option>
-                        {this.state.selectGroups?.map(group => (
-                          <option key={group.id} value={group.id}>
-                            {group.fullName}&nbsp;&nbsp;
-                            {getGroupAdmins(group)}
-                          </option>
-                        ))}
-                      </select>
+                      <p className="text-muted p-1">
+                        <InfoIcon gapRight />
+                        {this.state.createEvent !== null ? (
+                          <FormattedMessage
+                            id="app.groupsTeacher.createGroupInfo"
+                            defaultMessage="A new group will be created as a subgroup of the selected parent group. The newly created group will be automatically bound to the selected event and you will become its administrator. The name of the group will be assembled automatically from the course name and the scheduling information."
+                          />
+                        ) : (
+                          <FormattedMessage
+                            id="app.groupsTeacher.bindGroupInfo"
+                            defaultMessage="The selected event will be bound to an existing target group which you can select below."
+                          />
+                        )}
+                      </p>
+
+                      <InsetPanel>
+                        <Table borderless size="sm" className="mb-0 bg-transparent">
+                          <tbody>
+                            <tr>
+                              <td className="text-nowrap">
+                                <FormattedMessage
+                                  id="app.groupsTeacher.selectedEvent"
+                                  defaultMessage="Selected event"
+                                />
+                                :
+                              </td>
+                              <td className="w-100">
+                                <Badge bg="secondary">{(this.state.bindEvent || this.state.createEvent)?.sisId}</Badge>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className="text-nowrap w-0">
+                                <FormattedMessage id="app.groupsTeacher.courseName" defaultMessage="Course" />:
+                              </td>
+                              <td className="fw-bold w-100">
+                                {(this.state.bindEvent || this.state.createEvent)?.fullName}
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className="text-nowrap w-0">
+                                <FormattedMessage id="app.groupsTeacher.scheduledAt" defaultMessage="Scheduled at" />:
+                              </td>
+                              <td className="fw-bold w-100">
+                                <DayOfWeek dow={(this.state.bindEvent || this.state.createEvent)?.dayOfWeek} />
+                                &nbsp;
+                                {minutesToTimeStr((this.state.bindEvent || this.state.createEvent)?.time)}&nbsp;
+                                {(this.state.bindEvent || this.state.createEvent)?.fortnight && (
+                                  <>
+                                    (
+                                    {(this.state.bindEvent || this.state.createEvent)?.firstWeek % 2 === 1 ? (
+                                      <FormattedMessage
+                                        id="app.coursesGroupsList.firstWeekOdd"
+                                        defaultMessage="odd weeks"
+                                      />
+                                    ) : (
+                                      <FormattedMessage
+                                        id="app.coursesGroupsList.firstWeekEven"
+                                        defaultMessage="even weeks"
+                                      />
+                                    )}
+                                    )&nbsp;
+                                  </>
+                                )}
+                                {(this.state.bindEvent || this.state.createEvent)?.room}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </Table>
+                      </InsetPanel>
+
+                      <FormGroup controlId="group-select" className="mb-3">
+                        <FormLabel>
+                          {this.state.createEvent !== null ? (
+                            <FormattedMessage
+                              id="app.groupsTeacher.createParentGroupLabel"
+                              defaultMessage="Parent group"
+                            />
+                          ) : (
+                            <FormattedMessage
+                              id="app.groupsTeacher.bindTargetGroupLabel"
+                              defaultMessage="Target group"
+                            />
+                          )}
+                          :
+                          <Explanation id="group-select-explanation">
+                            <FormattedMessage
+                              id="app.groupsTeacher.createParentGroupLabelExplanation"
+                              defaultMessage="Only groups that are located in the hierarchy under both `{course}` course group and `{term}` term group are listed."
+                              values={{
+                                course: (this.state.bindEvent || this.state.createEvent)?.course?.code || '???',
+                                term: `${(this.state.bindEvent || this.state.createEvent)?.year}-${(this.state.bindEvent || this.state.createEvent)?.term}`,
+                              }}
+                            />{' '}
+                            {this.state.bindEvent !== null && (
+                              <FormattedMessage
+                                id="app.groupsTeacher.bindTargetGroupLabelExplanation"
+                                defaultMessage="Additionally, the group must not be organizational and you need to have administrator or supervisor access rights."
+                                values={{
+                                  course: this.state.createEvent?.course?.code || '???',
+                                  term: `${this.state.createEvent?.year}-${this.state.createEvent?.term}`,
+                                }}
+                              />
+                            )}
+                          </Explanation>
+                        </FormLabel>
+                        <InputGroup>
+                          <FormSelect
+                            className="form-control"
+                            value={this.state.selectedGroupId}
+                            onChange={this.handleGroupChange}>
+                            <option value="">...</option>
+                            {this.state.selectGroups?.map(group => (
+                              <option key={group.id} value={group.id}>
+                                {group.fullName}&nbsp;&nbsp;
+                                {getGroupAdmins(group)}
+                              </option>
+                            ))}
+                          </FormSelect>
+                        </InputGroup>
+                      </FormGroup>
+
+                      <Callout type="info" className="mt-3">
+                        <p>
+                          <FormattedMessage
+                            id="app.groupsTeacher.aboutStudentsInfo"
+                            defaultMessage="The students are not automatically added to the group, but they can join the group themselves via SIS-CodEx extension."
+                          />
+                        </p>
+                      </Callout>
                     </Modal.Body>
 
                     <Modal.Footer>

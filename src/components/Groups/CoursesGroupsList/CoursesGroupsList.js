@@ -32,14 +32,7 @@ import {
   recodexGroupEditLink,
   recodexGroupStudentsLink,
 } from '../../helpers/recodexLinks.js';
-
-/**
- * Convert time in minutes (from midnight) to string H:MM
- * @param {Number} minutes
- * @returns {String}
- */
-const getTimeStr = minutes =>
-  minutes ? `${Math.floor(minutes / 60)}:${(minutes % 60).toString().padStart(2, '0')}` : '';
+import { minutesToTimeStr } from '../../helpers/stringFormatters.js';
 
 /**
  * Retrieve course name in the given locale (with fallbacks).
@@ -162,9 +155,9 @@ const isSuitableForCourse = (sisEvent, group, groups) => {
   return courseCovered && termCovered;
 };
 
-const getParentCandidates = lruMemoize((sisEvent, groups, locale) => {
-  getGroups(groups, locale).filter(group => isSuitableForCourse(sisEvent, group, groups));
-});
+const getParentCandidates = lruMemoize((sisEvent, groups, locale) =>
+  getGroups(groups, locale).filter(group => isSuitableForCourse(sisEvent, group, groups))
+);
 
 /**
  * Get a sorted list of groups suitable for binding to the given course in the given term.
@@ -260,7 +253,7 @@ const CoursesGroupsList = ({
                               <td className="text-nowrap fw-bold">
                                 <DayOfWeek dow={sisEvent.dayOfWeek} />
                               </td>
-                              <td className="text-nowrap fw-bold">{getTimeStr(sisEvent.time)}</td>
+                              <td className="text-nowrap fw-bold">{minutesToTimeStr(sisEvent.time)}</td>
                               <td className="text-nowrap text-muted">
                                 {sisEvent.fortnight && (
                                   <>
