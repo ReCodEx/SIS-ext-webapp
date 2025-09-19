@@ -441,7 +441,7 @@ const CoursesGroupsList = ({
                                         <Button
                                           variant="danger"
                                           size="xs"
-                                          onClick={() => unbind(group.id, sisEvent.id)}
+                                          onClick={() => unbind(group.id, sisEvent)}
                                           confirmId={`unbind-${group.id}-${sisEvent.id}`}
                                           confirm={
                                             <FormattedMessage

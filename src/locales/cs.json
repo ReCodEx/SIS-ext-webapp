@@ -102,6 +102,7 @@
   "app.groupsTeacher.lastRefreshInfo": "Seznam předmětů, které vyučujete, byl naposledy stažen ze SISu",
   "app.groupsTeacher.noActiveTerms": "V tuto chvíli nejsou učitelům dostupné žádné semestry.",
   "app.groupsTeacher.notTeacher": "Tato stránka je dostupná pouze učitelům.",
+  "app.groupsTeacher.operationFailed": "Operace selhala",
   "app.groupsTeacher.scheduledAt": "Rozvrženo na",
   "app.groupsTeacher.selectGroupForBinding": "Vyberte skupinu pro svázání",
   "app.groupsTeacher.selectParentGroupForCreating": "Vyberte rodičovskou skupinu pro nově vytvářenou skupinu",

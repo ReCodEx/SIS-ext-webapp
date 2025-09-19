@@ -2,11 +2,13 @@ import { handleActions } from 'redux-actions';
 
 import { createRecord, resourceStatus, createActionsWithPostfixes } from '../helpers/resourceManager';
 import { createApiAction } from '../middleware/apiMiddleware.js';
+import { fromJS } from 'immutable';
 
 export const additionalActionTypes = {
   ...createActionsWithPostfixes('FETCH', 'siscodex/groups'),
   ...createActionsWithPostfixes('BIND', 'siscodex/groups'),
   ...createActionsWithPostfixes('UNBIND', 'siscodex/groups'),
+  ...createActionsWithPostfixes('CREATE', 'siscodex/groups'),
   ...createActionsWithPostfixes('JOIN', 'siscodex/groups'),
 };
 
@@ -27,20 +29,28 @@ export const fetchStudentGroups = eventIds => _fetchGroups('student', eventIds);
 
 export const fetchTeacherGroups = (eventIds, courseIds) => _fetchGroups('teacher', eventIds, courseIds);
 
-export const bindGroup = (groupId, eventId) =>
+export const bindGroup = (groupId, event) =>
   createApiAction({
     type: additionalActionTypes.BIND,
-    endpoint: `/groups/${groupId}/bind/${eventId}`,
+    endpoint: `/groups/${groupId}/bind/${event.id}`,
     method: 'POST',
-    meta: { groupId, eventId },
+    meta: { groupId, eventId: event.id, eventSisId: event.sisId },
   });
 
-export const unbindGroup = (groupId, eventId) =>
+export const unbindGroup = (groupId, event) =>
   createApiAction({
     type: additionalActionTypes.UNBIND,
-    endpoint: `/groups/${groupId}/bind/${eventId}`,
+    endpoint: `/groups/${groupId}/bind/${event.id}`,
     method: 'DELETE',
-    meta: { groupId, eventId },
+    meta: { groupId, eventId: event.id, eventSisId: event.sisId },
+  });
+
+export const createGroup = (parentId, event) =>
+  createApiAction({
+    type: additionalActionTypes.CREATE,
+    endpoint: `/groups/${parentId}/create/${event.id}`,
+    method: 'POST',
+    meta: { parentId, eventId: event.id, eventSisId: event.sisId },
   });
 
 export const joinGroup = groupId =>
@@ -64,27 +74,29 @@ const reducer = handleActions(
     [additionalActionTypes.FETCH_REJECTED]: (state, { payload }) =>
       state.set('state', resourceStatus.FAILED).set('error', payload),
 
-    // bindings
-    [additionalActionTypes.BIND_PENDING]: (state, { meta: { groupId, eventId } }) =>
+    // group management
+    [additionalActionTypes.BIND_PENDING]: (state, { meta: { groupId, eventSisId } }) =>
       state
-        .updateIn(['data', groupId, 'attributes', 'group'], groups => groups.push(eventId))
+        .updateIn(['data', groupId, 'attributes', 'group'], groups =>
+          groups ? groups.push(eventSisId) : fromJS([eventSisId])
+        )
         .setIn(['data', groupId, 'pending'], 'binding'),
 
     [additionalActionTypes.BIND_FULFILLED]: (state, { meta: { groupId } }) =>
       state.removeIn(['data', groupId, 'pending']),
 
-    [additionalActionTypes.BIND_REJECTED]: (state, { meta: { groupId, eventId }, payload }) =>
+    [additionalActionTypes.BIND_REJECTED]: (state, { meta: { groupId, eventSisId }, payload }) =>
       state
-        .updateIn(['data', groupId, 'attributes', 'group'], groups => groups.filter(id => id !== eventId))
+        .updateIn(['data', groupId, 'attributes', 'group'], groups => groups?.filter(id => id !== eventSisId))
         .removeIn(['data', groupId, 'pending'])
         .set('error', payload),
 
     [additionalActionTypes.UNBIND_PENDING]: (state, { meta: { groupId } }) =>
       state.setIn(['data', groupId, 'pending'], 'unbinding'),
 
-    [additionalActionTypes.UNBIND_FULFILLED]: (state, { meta: { groupId, eventId } }) =>
+    [additionalActionTypes.UNBIND_FULFILLED]: (state, { meta: { groupId, eventSisId } }) =>
       state
-        .updateIn(['data', groupId, 'attributes', 'group'], groups => groups.filter(id => id !== eventId))
+        .updateIn(['data', groupId, 'attributes', 'group'], groups => groups?.filter(id => id !== eventSisId))
         .removeIn(['data', groupId, 'pending']),
 
     [additionalActionTypes.UNBIND_REJECTED]: (state, { meta: { groupId }, payload }) =>
