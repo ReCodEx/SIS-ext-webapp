@@ -26,7 +26,6 @@ import {
 
 import './CoursesGroupsList.css';
 import Button, { TheButtonGroup } from '../../widgets/TheButton';
-import { Link } from 'react-router';
 import {
   recodexGroupAssignmentsLink,
   recodexGroupEditLink,
@@ -399,7 +398,7 @@ const CoursesGroupsList = ({
                                   )}
 
                                   {recodexGroupAssignmentsLink(group.id) && group.membership === 'student' && (
-                                    <Link to={recodexGroupAssignmentsLink(group.id)}>
+                                    <a href={recodexGroupAssignmentsLink(group.id)}>
                                       <Button variant="primary" size="xs">
                                         <LinkIcon gapRight />
                                         <FormattedMessage
@@ -407,13 +406,13 @@ const CoursesGroupsList = ({
                                           defaultMessage="Group Assignments"
                                         />
                                       </Button>
-                                    </Link>
+                                    </a>
                                   )}
 
                                   {recodexGroupStudentsLink(group.id) &&
                                     group.membership &&
                                     group.membership !== 'student' && (
-                                      <Link to={recodexGroupStudentsLink(group.id)}>
+                                      <a href={recodexGroupStudentsLink(group.id)}>
                                         <Button variant="primary" size="xs">
                                           <LinkIcon gapRight />
                                           <FormattedMessage
@@ -421,13 +420,13 @@ const CoursesGroupsList = ({
                                             defaultMessage="Group Students"
                                           />
                                         </Button>
-                                      </Link>
+                                      </a>
                                     )}
 
                                   {(group.isAdmin || group.membership === 'supervisor') && (
                                     <>
                                       {recodexGroupEditLink(group.id) && (
-                                        <Link to={recodexGroupEditLink(group.id)}>
+                                        <a href={recodexGroupEditLink(group.id)}>
                                           <Button variant="warning" size="xs">
                                             <LinkIcon gapRight />
                                             <FormattedMessage
@@ -435,7 +434,7 @@ const CoursesGroupsList = ({
                                               defaultMessage="Edit Group"
                                             />
                                           </Button>
-                                        </Link>
+                                        </a>
                                       )}
                                       {unbind && (
                                         <Button

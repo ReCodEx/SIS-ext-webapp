@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { Route, Routes } from 'react-router-dom';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { far as regularIcons } from '@fortawesome/free-regular-svg-icons';
 import { fas as solidIcons } from '@fortawesome/free-solid-svg-icons';
@@ -93,11 +92,7 @@ class App extends Component {
   };
 
   render() {
-    return (
-      <Routes>
-        <Route path="*" element={<LayoutContainer />} />
-      </Routes>
-    );
+    return <LayoutContainer />;
   }
 }
 
