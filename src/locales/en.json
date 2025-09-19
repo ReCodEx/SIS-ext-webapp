@@ -102,6 +102,7 @@
   "app.groupsTeacher.lastRefreshInfo": "The list of courses taught by you was last downloaded from SIS",
   "app.groupsTeacher.noActiveTerms": "There are currently no terms available for teachers.",
   "app.groupsTeacher.notTeacher": "This page is available only to teachers.",
+  "app.groupsTeacher.operationFailed": "The operation has failed",
   "app.groupsTeacher.scheduledAt": "Scheduled at",
   "app.groupsTeacher.selectGroupForBinding": "Select Group for Binding",
   "app.groupsTeacher.selectParentGroupForCreating": "Select Parent Group for a New Group",

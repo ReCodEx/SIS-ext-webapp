@@ -23,7 +23,7 @@ import {
 import ResourceRenderer from '../../components/helpers/ResourceRenderer';
 
 import { fetchTeacherCourses } from '../../redux/modules/courses.js';
-import { fetchTeacherGroups, bindGroup, unbindGroup } from '../../redux/modules/groups.js';
+import { fetchTeacherGroups, bindGroup, unbindGroup, createGroup } from '../../redux/modules/groups.js';
 import { fetchUser, fetchUserIfNeeded } from '../../redux/modules/users.js';
 import { fetchAllTerms } from '../../redux/modules/terms.js';
 import { loggedInUserIdSelector } from '../../redux/selectors/auth.js';
@@ -79,19 +79,46 @@ const getGroupAdmins = group => {
 };
 
 class GroupsTeacher extends Component {
-  state = { bindEvent: null, createEvent: null, selectGroups: null, selectedGroupId: '' };
+  state = {
+    bindEvent: null,
+    createEvent: null,
+    modalPending: false,
+    modalError: null,
+    selectGroups: null,
+    selectedGroupId: '',
+  };
 
   startBind = (bindEvent, selectGroups) => this.setState({ bindEvent, selectGroups });
+
   startCreate = (createEvent, selectGroups) => this.setState({ createEvent, selectGroups });
-  closeModal = () => this.setState({ bindEvent: null, createEvent: null, selectGroups: null, selectedGroupId: '' });
+
+  closeModal = () =>
+    this.setState({
+      bindEvent: null,
+      createEvent: null,
+      modalPending: false,
+      modalError: null,
+      selectGroups: null,
+      selectedGroupId: '',
+    });
+
   handleGroupChange = ev => this.setState({ selectedGroupId: ev.target.value });
 
   completeModalOperation = () => {
-    const { loggedInUserId, bind, loadAsync } = this.props;
+    const { loggedInUserId, bind, create, loadAsync } = this.props;
 
+    this.setState({ modalPending: true });
     if (this.state.bindEvent !== null) {
-      bind(this.state.selectedGroupId, this.state.bindEvent.id)
-        .then(() => loadAsync(loggedInUserId))
+      bind(this.state.selectedGroupId, this.state.bindEvent).then(
+        () => loadAsync(loggedInUserId).then(this.closeModal),
+        error => this.setState({ modalPending: false, modalError: error?.message || 'unknown error' })
+      );
+    } else if (this.state.createEvent !== null) {
+      create(this.state.selectedGroupId, this.state.createEvent)
+        .then(
+          () => loadAsync(loggedInUserId),
+          error => this.setState({ modalPending: false, modalError: error?.message || 'unknown error' })
+        )
         .then(this.closeModal);
     } else {
       this.closeModal();
@@ -100,7 +127,10 @@ class GroupsTeacher extends Component {
 
   unbindAndReload = (groupId, eventId) => {
     const { loggedInUserId, unbind, loadAsync } = this.props;
-    unbind(groupId, eventId).then(() => loadAsync(loggedInUserId));
+    unbind(groupId, eventId).then(
+      () => loadAsync(loggedInUserId),
+      () => loadAsync(loggedInUserId)
+    );
   };
 
   componentDidMount() {
@@ -234,8 +264,9 @@ class GroupsTeacher extends Component {
                     show={this.state.bindEvent !== null || this.state.createEvent !== null}
                     backdrop="static"
                     size="xl"
+                    fullscreen="xl-down"
                     onHide={this.closeModal}>
-                    <Modal.Header closeButton>
+                    <Modal.Header closeButton={!this.state.modalPending}>
                       <Modal.Title>
                         {this.state.bindEvent !== null && (
                           <FormattedMessage
@@ -368,13 +399,20 @@ class GroupsTeacher extends Component {
                               <option key={group.id} value={group.id}>
                                 {group.fullName}&nbsp;&nbsp;
                                 {getGroupAdmins(group)}
+                                {group.attributes?.group && (
+                                  <>
+                                    &nbsp;{' {'}
+                                    {group.attributes?.group.join(', ')}
+                                    {'}'}
+                                  </>
+                                )}
                               </option>
                             ))}
                           </FormSelect>
                         </InputGroup>
                       </FormGroup>
 
-                      <Callout type="info" className="mt-3">
+                      <Callout variant="info" className="mt-3">
                         <p>
                           <FormattedMessage
                             id="app.groupsTeacher.aboutStudentsInfo"
@@ -382,16 +420,29 @@ class GroupsTeacher extends Component {
                           />
                         </p>
                       </Callout>
+
+                      {this.state.modalError && (
+                        <Callout variant="danger" className="mt-3">
+                          <p>
+                            <FormattedMessage
+                              id="app.groupsTeacher.operationFailed"
+                              defaultMessage="The operation has failed"
+                            />
+                            :
+                          </p>
+                          <pre>{this.state.modalError}</pre>
+                        </Callout>
+                      )}
                     </Modal.Body>
 
                     <Modal.Footer>
                       <div className="text-center w-100">
                         <TheButtonGroup>
                           <Button
-                            variant="success"
-                            disabled={!this.state.selectedGroupId}
+                            variant={this.state.modalError ? 'danger' : 'success'}
+                            disabled={this.state.modalPending || !this.state.selectedGroupId}
                             onClick={this.completeModalOperation}>
-                            <SuccessIcon gapRight />
+                            {this.state.modalPending ? <LoadingIcon gapRight /> : <SuccessIcon gapRight />}
                             {this.state.bindEvent !== null ? (
                               <FormattedMessage
                                 id="app.groupsTeacher.confirmButtonBind"
@@ -404,7 +455,7 @@ class GroupsTeacher extends Component {
                               />
                             )}
                           </Button>
-                          <Button variant="secondary" onClick={this.closeModal}>
+                          <Button variant="secondary" disabled={this.state.modalPending} onClick={this.closeModal}>
                             <CloseIcon gapRight />
                             <FormattedMessage id="generic.cancel" defaultMessage="Cancel" />
                           </Button>
@@ -440,6 +491,7 @@ GroupsTeacher.propTypes = {
   loadAsync: PropTypes.func.isRequired,
   bind: PropTypes.func.isRequired,
   unbind: PropTypes.func.isRequired,
+  create: PropTypes.func.isRequired,
 };
 
 export default connect(
@@ -454,7 +506,8 @@ export default connect(
   }),
   dispatch => ({
     loadAsync: (userId, expiration = DEFAULT_EXPIRATION) => GroupsTeacher.loadAsync({ userId }, dispatch, expiration),
-    bind: (groupId, eventId) => dispatch(bindGroup(groupId, eventId)),
-    unbind: (groupId, eventId) => dispatch(unbindGroup(groupId, eventId)),
+    bind: (groupId, event) => dispatch(bindGroup(groupId, event)),
+    unbind: (groupId, event) => dispatch(unbindGroup(groupId, event)),
+    create: (parentGroupId, event) => dispatch(createGroup(parentGroupId, event)),
   })
 )(GroupsTeacher);
