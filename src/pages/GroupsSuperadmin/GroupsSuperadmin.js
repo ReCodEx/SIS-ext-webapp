@@ -7,6 +7,7 @@ import { FormattedMessage } from 'react-intl';
 
 import Page from '../../components/layout/Page';
 import Box from '../../components/widgets/Box';
+import GroupsTreeView from '../../components/Groups/GroupsTreeView';
 import Button, { TheButtonGroup } from '../../components/widgets/TheButton';
 import { CloseIcon, ManagementIcon } from '../../components/icons';
 // import ResourceRenderer from '../../components/helpers/ResourceRenderer';
@@ -95,10 +96,9 @@ class GroupsSuperadmin extends Component {
           isSuperadminRole(user.role) ? (
             <>
               <Box
+                unlimitedHeight
                 title={<FormattedMessage id="app.groupsSupervisor.currentlyManagedGroups" defaultMessage="Groups" />}>
-                {Object.values(groups).map(group => (
-                  <div key={group.id}>{group.id}</div>
-                ))}
+                <GroupsTreeView groups={groups} />
               </Box>
 
               <Modal show={false} backdrop="static" size="xl" fullscreen="xl-down" onHide={this.closeModal}>

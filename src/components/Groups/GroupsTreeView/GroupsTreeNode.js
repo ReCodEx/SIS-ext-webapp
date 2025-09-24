@@ -1,0 +1,200 @@
+import React, { useState } from 'react';
+import PropTypes from 'prop-types';
+import { FormattedMessage } from 'react-intl';
+import { Badge, OverlayTrigger, Popover } from 'react-bootstrap';
+import Collapse from 'react-collapse';
+
+import Button from '../../widgets/TheButton';
+import GroupsTreeList from './GroupsTreeList.js';
+import GroupMembershipIcon from '../GroupMembershipIcon';
+import Icon, { CloseIcon, GroupIcon, LectureIcon, LoadingIcon, TermIcon } from '../../icons';
+import withLinks from '../../../helpers/withLinks.js';
+import { EMPTY_OBJ } from '../../../helpers/common.js';
+
+const DEFAULT_ICON = ['far', 'square'];
+
+const clickEventDissipator = ev => ev.stopPropagation();
+
+const adminsList = admins =>
+  Object.values(admins)
+    .map(({ firstName, lastName }) => `${firstName} ${lastName}`)
+    .join(', ');
+
+const getLocalizedName = (name, id, locale) => {
+  if (typeof name === 'string') {
+    return name;
+  }
+
+  if (typeof name === 'object' && Object.keys(name).length > 0) {
+    return name[locale] || name.en || name[Object.keys(name)[0]] || `<${id}>`;
+  }
+
+  return `<${id}>`;
+};
+
+const KNOWN_ATTR_KEYS = {
+  course: 'primary',
+  term: 'info',
+  group: 'warning',
+};
+
+const ATTR_ICONS = {
+  course: <LectureIcon gapRight />,
+  term: <TermIcon gapRight />,
+  group: <GroupIcon gapRight />,
+};
+
+const GroupsTreeNode = React.memo(({ group, isExpanded = false, addAttribute, removeAttribute, links, locale }) => {
+  const {
+    id,
+    admins: adminsRaw,
+    name,
+    organizational = false,
+    exam = false,
+    attributes = EMPTY_OBJ,
+    membership,
+    children = [],
+    pending = false,
+  } = group;
+
+  const admins = Array.isArray(adminsRaw) ? adminsRaw : Object.values(adminsRaw || {});
+  const leafNode = children.length === 0;
+  const [isOpen, setOpen] = useState(isExpanded);
+
+  return (
+    <li>
+      <span onClick={() => setOpen(!isOpen)} className="clearfix">
+        <Icon
+          icon={leafNode ? DEFAULT_ICON : isOpen ? 'minus-square' : 'plus-square'}
+          className="text-body-secondary"
+          gapRight={2}
+          fixedWidth
+        />
+
+        {getLocalizedName(name, id, locale)}
+
+        {admins && admins.length > 0 && (
+          <span className="ps-2">
+            (
+            {admins.length > 2 ? (
+              <OverlayTrigger
+                placement="bottom"
+                overlay={
+                  <Popover id={`admins-${id}`}>
+                    <Popover.Header>
+                      <FormattedMessage
+                        id="app.groupsTreeView.adminPopover.title"
+                        defaultMessage="Group administrators"
+                      />
+                      :
+                    </Popover.Header>
+                    <Popover.Body>{adminsList(admins)}</Popover.Body>
+                  </Popover>
+                }>
+                <em className="small">
+                  <FormattedMessage
+                    id="app.groupsTreeView.adminsCount"
+                    defaultMessage="{count} {count, plural, one {admin} other {admins}}"
+                    values={{ count: admins.length }}
+                  />
+                </em>
+              </OverlayTrigger>
+            ) : (
+              <em className="small">{adminsList(admins)}</em>
+            )}
+            )
+          </span>
+        )}
+
+        {exam && (
+          <GroupIcon
+            exam={true}
+            className="text-warning"
+            gapLeft={2}
+            tooltipId={`${id}-exam-tooltip`}
+            tooltipPlacement="bottom"
+            tooltip={<FormattedMessage id="app.groupsTreeView.examTooltip" defaultMessage="Exam group" />}
+          />
+        )}
+
+        {organizational && (
+          <GroupIcon
+            organizational={true}
+            className="text-body-secondary"
+            gapLeft={2}
+            tooltipId={`${id}-organizational-tooltip`}
+            tooltipPlacement="bottom"
+            tooltip={
+              <FormattedMessage
+                id="app.groupsTreeView.organizationalTooltip"
+                defaultMessage="The group is organizational (it does not have any students or assignments)"
+              />
+            }
+          />
+        )}
+
+        <GroupMembershipIcon id={id} membership={membership} gapLeft={2} />
+        {pending && <LoadingIcon gapLeft={2} />}
+
+        {attributes && Object.keys(attributes).length > 0 && (
+          <span className="float-end" onClick={clickEventDissipator}>
+            {Object.keys(attributes).map(key =>
+              attributes[key].map(value => (
+                <Badge key={value} bg={KNOWN_ATTR_KEYS[key] || 'secondary'} className="ms-1">
+                  {ATTR_ICONS[key]}
+                  {!KNOWN_ATTR_KEYS[key] && `${key}: `}
+                  {value}
+                  {removeAttribute && <CloseIcon gapLeft onClick={() => removeAttribute(id, key, value)} />}
+                </Badge>
+              ))
+            )}
+          </span>
+        )}
+
+        {addAttribute && (
+          <span className="float-end" onClick={clickEventDissipator}>
+            <Button size="xs" variant="success" onClick={() => addAttribute(id)}>
+              <Icon icon="plus" fixedWidth />
+              <span className="d-none d-sm-inline">
+                <FormattedMessage id="app.groupsTreeView.addAttribute" defaultMessage="Add attribute" />
+              </span>
+            </Button>
+          </span>
+        )}
+      </span>
+
+      {!leafNode && (
+        <Collapse isOpened={isOpen}>
+          <GroupsTreeList
+            groups={children}
+            isExpanded={isExpanded}
+            addAttribute={addAttribute}
+            removeAttribute={removeAttribute}
+            locale={locale}
+          />
+        </Collapse>
+      )}
+    </li>
+  );
+});
+
+GroupsTreeNode.propTypes = {
+  group: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    admins: PropTypes.arrayOf(PropTypes.object),
+    name: PropTypes.object,
+    organizational: PropTypes.bool,
+    exam: PropTypes.bool,
+    attributes: PropTypes.object,
+    membership: PropTypes.string,
+    children: PropTypes.arrayOf(PropTypes.object),
+    pending: PropTypes.bool,
+  }),
+  isExpanded: PropTypes.bool,
+  addAttribute: PropTypes.func,
+  removeAttribute: PropTypes.func,
+  locale: PropTypes.string.isRequired,
+  links: PropTypes.object,
+};
+
+export default withLinks(GroupsTreeNode);

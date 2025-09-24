@@ -10,6 +10,8 @@ export const additionalActionTypes = {
   ...createActionsWithPostfixes('UNBIND', 'siscodex/groups'),
   ...createActionsWithPostfixes('CREATE', 'siscodex/groups'),
   ...createActionsWithPostfixes('JOIN', 'siscodex/groups'),
+  ...createActionsWithPostfixes('ADD_ATTRIBUTE', 'siscodex/groups'),
+  ...createActionsWithPostfixes('REMOVE_ATTRIBUTE', 'siscodex/groups'),
 };
 
 /**
@@ -59,6 +61,24 @@ export const joinGroup = groupId =>
     endpoint: `/groups/${groupId}/join`,
     method: 'POST',
     meta: { groupId },
+  });
+
+export const addGroupAttribute = (groupId, key, value) =>
+  createApiAction({
+    type: additionalActionTypes.ADD_ATTRIBUTE,
+    endpoint: `/groups/${groupId}/add-attribute`,
+    method: 'POST',
+    meta: { groupId, key, value },
+    body: { key, value },
+  });
+
+export const removeGroupAttribute = (groupId, key, value) =>
+  createApiAction({
+    type: additionalActionTypes.REMOVE_ATTRIBUTE,
+    endpoint: `/groups/${groupId}/remove-attribute`,
+    method: 'POST',
+    meta: { groupId, key, value },
+    body: { key, value },
   });
 
 /**
@@ -111,6 +131,31 @@ const reducer = handleActions(
 
     [additionalActionTypes.JOIN_REJECTED]: (state, { meta: { groupId }, payload }) =>
       state.setIn(['data', groupId, 'membership'], null).removeIn(['data', groupId, 'pending']).set('error', payload),
+
+    // attributes
+    [additionalActionTypes.ADD_ATTRIBUTE_PENDING]: (state, { meta: { groupId, key, value } }) =>
+      state.setIn(['data', groupId, 'pending'], 'adding'),
+
+    [additionalActionTypes.ADD_ATTRIBUTE_FULFILLED]: (state, { meta: { groupId, key, value } }) =>
+      state
+        .updateIn(['data', groupId, 'attributes', key], attributes =>
+          attributes ? attributes.push(value) : fromJS([value])
+        )
+        .removeIn(['data', groupId, 'pending']),
+
+    [additionalActionTypes.ADD_ATTRIBUTE_REJECTED]: (state, { meta: { groupId }, payload }) =>
+      state.removeIn(['data', groupId, 'pending']).set('error', payload),
+
+    [additionalActionTypes.REMOVE_ATTRIBUTE_PENDING]: (state, { meta: { groupId, key, value } }) =>
+      state.setIn(['data', groupId, 'pending'], 'removing'),
+
+    [additionalActionTypes.REMOVE_ATTRIBUTE_FULFILLED]: (state, { meta: { groupId, key, value } }) =>
+      state
+        .updateIn(['data', groupId, 'attributes', key], attributes => attributes?.filter(val => val !== value))
+        .removeIn(['data', groupId, 'pending']),
+
+    [additionalActionTypes.REMOVE_ATTRIBUTE_REJECTED]: (state, { meta: { groupId }, payload }) =>
+      state.removeIn(['data', groupId, 'pending']).set('error', payload),
   },
   createRecord()
 );
