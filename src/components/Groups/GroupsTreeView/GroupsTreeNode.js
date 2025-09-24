@@ -5,9 +5,10 @@ import { Badge, OverlayTrigger, Popover } from 'react-bootstrap';
 import Collapse from 'react-collapse';
 
 import Button from '../../widgets/TheButton';
+import Confirm from '../../widgets/Confirm';
 import GroupsTreeList from './GroupsTreeList.js';
 import GroupMembershipIcon from '../GroupMembershipIcon';
-import Icon, { CloseIcon, GroupIcon, LectureIcon, LoadingIcon, TermIcon } from '../../icons';
+import Icon, { AddIcon, CloseIcon, GroupIcon, LectureIcon, LoadingIcon, TermIcon } from '../../icons';
 import withLinks from '../../../helpers/withLinks.js';
 import { EMPTY_OBJ } from '../../../helpers/common.js';
 
@@ -136,29 +137,44 @@ const GroupsTreeNode = React.memo(({ group, isExpanded = false, addAttribute, re
         <GroupMembershipIcon id={id} membership={membership} gapLeft={2} />
         {pending && <LoadingIcon gapLeft={2} />}
 
+        {addAttribute && (
+          <span className="float-end" onClick={clickEventDissipator}>
+            <Button size="xs" variant="success" className="ms-3" disabled={pending} onClick={() => addAttribute(group)}>
+              <AddIcon gapRight />
+              <FormattedMessage id="app.groupsTreeView.addAttribute" defaultMessage="Add" />
+            </Button>
+          </span>
+        )}
+
         {attributes && Object.keys(attributes).length > 0 && (
           <span className="float-end" onClick={clickEventDissipator}>
             {Object.keys(attributes).map(key =>
               attributes[key].map(value => (
-                <Badge key={value} bg={KNOWN_ATTR_KEYS[key] || 'secondary'} className="ms-1">
+                <Badge
+                  key={value}
+                  bg={KNOWN_ATTR_KEYS[key] || 'secondary'}
+                  className={'ms-1' + (pending ? ' opacity-25' : '')}>
                   {ATTR_ICONS[key]}
                   {!KNOWN_ATTR_KEYS[key] && `${key}: `}
                   {value}
-                  {removeAttribute && <CloseIcon gapLeft onClick={() => removeAttribute(id, key, value)} />}
+
+                  {removeAttribute && !pending && (
+                    <Confirm
+                      id={id}
+                      onConfirmed={() => removeAttribute(id, key, value)}
+                      question={
+                        <FormattedMessage
+                          id="app.groupsTreeView.removeAttributeConfirm"
+                          defaultMessage="Are you sure you want to remove this attribute?"
+                        />
+                      }>
+                      <CloseIcon gapLeft className="clickable" />
+                    </Confirm>
+                  )}
+                  {pending && <LoadingIcon gapLeft />}
                 </Badge>
               ))
             )}
-          </span>
-        )}
-
-        {addAttribute && (
-          <span className="float-end" onClick={clickEventDissipator}>
-            <Button size="xs" variant="success" onClick={() => addAttribute(id)}>
-              <Icon icon="plus" fixedWidth />
-              <span className="d-none d-sm-inline">
-                <FormattedMessage id="app.groupsTreeView.addAttribute" defaultMessage="Add attribute" />
-              </span>
-            </Button>
           </span>
         )}
       </span>
