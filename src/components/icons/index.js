@@ -78,6 +78,7 @@ export const LinkIcon = props => <Icon {...props} icon="share-square" />;
 export const LoadingIcon = props => <Icon {...props} icon="spinner" pulse style={{ opacity: 0.8 }} />;
 export const LocalIcon = props => <Icon {...props} icon="thumbtack" />;
 export const MailIcon = props => <Icon {...props} icon={defaultMessageIcon} />;
+export const ManagementIcon = props => <Icon {...props} icon="screwdriver-wrench" />;
 export const NoteIcon = props => <Icon {...props} icon={['far', 'sticky-note']} />;
 export const ObserverIcon = props => <Icon {...props} icon="binoculars" />;
 export const OutputIcon = props => <Icon {...props} icon="sign-out-alt" />;

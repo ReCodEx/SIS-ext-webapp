@@ -5,6 +5,7 @@ import { matchPath, Routes, Route, Navigate } from 'react-router-dom';
 import App from '../containers/App';
 import GroupsStudent from './GroupsStudent';
 import GroupsTeacher from './GroupsTeacher';
+import GroupsSuperadmin from './GroupsSuperadmin';
 import Home from './Home';
 import Terms from './Terms';
 import User from './User';
@@ -73,6 +74,7 @@ const routesDescriptors = [
   r('app/terms', Terms, 'TERMS_URI', true),
   r('app/groups-student', GroupsStudent, 'GROUPS_STUDENT_URI', true),
   r('app/groups-teacher', GroupsTeacher, 'GROUPS_TEACHER_URI', true),
+  r('app/groups-superadmin', GroupsSuperadmin, 'GROUPS_SUPERADMIN_URI', true),
 ];
 
 /*

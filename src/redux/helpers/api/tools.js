@@ -47,8 +47,15 @@ const generateQuery = query => {
   return flatten.join('&');
 };
 
-export const assembleEndpoint = (endpoint, query = {}) =>
-  endpoint + maybeQuestionMark(endpoint, query) + generateQuery(query);
+export const assembleEndpoint = (endpoint, query = {}) => {
+  const filteredQuery = {};
+  Object.keys(query)
+    .filter(key => query[key] !== undefined && query[key] !== null)
+    .forEach(key => {
+      filteredQuery[key] = query[key];
+    });
+  return endpoint + maybeQuestionMark(endpoint, filteredQuery) + generateQuery(filteredQuery);
+};
 
 export const flattenBody = body => {
   const flattened = flatten(body, { delimiter: ':' });

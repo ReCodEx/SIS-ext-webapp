@@ -13,6 +13,7 @@ import Icon, {
   JoinGroupIcon,
   LinkIcon,
   LoadingIcon,
+  ManagementIcon,
   ReturnIcon,
   UserProfileIcon,
   TermIcon,
@@ -84,7 +85,7 @@ class Home extends Component {
     const {
       loggedInUser,
       params: { token = null },
-      links: { USER_URI, TERMS_URI, GROUPS_STUDENT_URI, GROUPS_TEACHER_URI },
+      links: { USER_URI, TERMS_URI, GROUPS_STUDENT_URI, GROUPS_TEACHER_URI, GROUPS_SUPERADMIN_URI },
     } = this.props;
 
     return (
@@ -203,28 +204,56 @@ class Home extends Component {
                 )}
 
                 {isSuperadminRole(user.role) && (
-                  <Row className="mb-4">
-                    <Col xs={false} sm="auto">
-                      <h3>
-                        <TermIcon gapLeft={2} gapRight={2} fixedWidth className="text-body-secondary" />
-                      </h3>
-                    </Col>
-                    <Col xs={12} sm>
-                      <h3>
-                        <Link to={TERMS_URI} className="link-body-emphasis">
-                          <FormattedMessage id="app.sidebar.menu.terms" defaultMessage="Terms" />
-                          <LinkIcon gapLeft={3} />
-                        </Link>
-                      </h3>
+                  <>
+                    <Row className="mb-4">
+                      <Col xs={false} sm="auto">
+                        <h3>
+                          <ManagementIcon gapLeft={2} gapRight={2} fixedWidth className="text-body-secondary" />
+                        </h3>
+                      </Col>
+                      <Col xs={12} sm>
+                        <h3>
+                          <Link to={GROUPS_SUPERADMIN_URI} className="link-body-emphasis">
+                            <FormattedMessage
+                              id="app.sidebar.menu.groupsSuperadmin"
+                              defaultMessage="Group Management"
+                            />
+                            <LinkIcon gapLeft={3} />
+                          </Link>
+                        </h3>
 
-                      <p>
-                        <FormattedMessage
-                          id="app.homepage.termsPage"
-                          defaultMessage="Management of terms and their related dates (when they are active for students and teachers)."
-                        />
-                      </p>
-                    </Col>
-                  </Row>
+                        <p>
+                          <FormattedMessage
+                            id="app.homepage.groupsSuperadminPage"
+                            defaultMessage="Management of groups and their attributes at highest level (available to superadmins only)."
+                          />
+                        </p>
+                      </Col>
+                    </Row>
+
+                    <Row className="mb-4">
+                      <Col xs={false} sm="auto">
+                        <h3>
+                          <TermIcon gapLeft={2} gapRight={2} fixedWidth className="text-body-secondary" />
+                        </h3>
+                      </Col>
+                      <Col xs={12} sm>
+                        <h3>
+                          <Link to={TERMS_URI} className="link-body-emphasis">
+                            <FormattedMessage id="app.sidebar.menu.terms" defaultMessage="Terms" />
+                            <LinkIcon gapLeft={3} />
+                          </Link>
+                        </h3>
+
+                        <p>
+                          <FormattedMessage
+                            id="app.homepage.termsPage"
+                            defaultMessage="Management of terms and their related dates (when they are active for students and teachers)."
+                          />
+                        </p>
+                      </Col>
+                    </Row>
+                  </>
                 )}
 
                 <hr className="my-4" />

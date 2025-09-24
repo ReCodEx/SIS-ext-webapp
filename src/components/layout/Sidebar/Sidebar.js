@@ -25,7 +25,7 @@ const Sidebar = ({
   pendingFetchOperations,
   loggedInUser,
   currentUrl,
-  links: { HOME_URI, USER_URI, TERMS_URI, GROUPS_STUDENT_URI, GROUPS_TEACHER_URI },
+  links: { HOME_URI, USER_URI, TERMS_URI, GROUPS_STUDENT_URI, GROUPS_TEACHER_URI, GROUPS_SUPERADMIN_URI },
 }) => {
   const user = getUserData(loggedInUser);
 
@@ -91,7 +91,16 @@ const Sidebar = ({
                       link={GROUPS_TEACHER_URI}
                     />
                   )}
-                  {isSuperadminRole(user.role) && <></>}
+                  {isSuperadminRole(user.role) && (
+                    <MenuItem
+                      title={
+                        <FormattedMessage id="app.sidebar.menu.groupsSuperadmin" defaultMessage="Group Management" />
+                      }
+                      icon="screwdriver-wrench"
+                      currentPath={currentUrl}
+                      link={GROUPS_SUPERADMIN_URI}
+                    />
+                  )}
 
                   <MenuItem
                     title={<FormattedMessage id="app.sidebar.menu.terms" defaultMessage="Terms" />}
