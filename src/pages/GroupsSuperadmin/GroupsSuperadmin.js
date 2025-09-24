@@ -9,10 +9,10 @@ import Page from '../../components/layout/Page';
 import Box from '../../components/widgets/Box';
 import GroupsTreeView from '../../components/Groups/GroupsTreeView';
 import Button, { TheButtonGroup } from '../../components/widgets/TheButton';
-import { CloseIcon, ManagementIcon } from '../../components/icons';
+import { CloseIcon, GroupIcon, ManagementIcon } from '../../components/icons';
 // import ResourceRenderer from '../../components/helpers/ResourceRenderer';
 
-import { fetchAllGroups } from '../../redux/modules/groups.js';
+import { fetchAllGroups, addGroupAttribute, removeGroupAttribute } from '../../redux/modules/groups.js';
 import { fetchUserIfNeeded } from '../../redux/modules/users.js';
 import { fetchAllTerms } from '../../redux/modules/terms.js';
 import { loggedInUserIdSelector } from '../../redux/selectors/auth.js';
@@ -43,18 +43,18 @@ const getGroupAdmins = group => {
 
 class GroupsSuperadmin extends Component {
   state = {
+    modalGroup: null,
     modalPending: false,
     modalError: null,
-    selectGroups: null,
-    selectedGroupId: '',
   };
+
+  openModal = modalGroup => this.setState({ modalGroup, modalPending: false, modalError: null });
 
   closeModal = () =>
     this.setState({
+      modalGroup: null,
       modalPending: false,
       modalError: null,
-      selectGroups: null,
-      selectedGroupId: '',
     });
 
   // handleGroupChange = ev => this.setState({ selectedGroupId: ev.target.value });
@@ -83,7 +83,7 @@ class GroupsSuperadmin extends Component {
     ]);
 
   render() {
-    const { loggedInUser, groups } = this.props;
+    const { loggedInUser, groups, removeAttribute } = this.props;
 
     return (
       <Page
@@ -98,10 +98,15 @@ class GroupsSuperadmin extends Component {
               <Box
                 unlimitedHeight
                 title={<FormattedMessage id="app.groupsSupervisor.currentlyManagedGroups" defaultMessage="Groups" />}>
-                <GroupsTreeView groups={groups} />
+                <GroupsTreeView groups={groups} addAttribute={this.openModal} removeAttribute={removeAttribute} />
               </Box>
 
-              <Modal show={false} backdrop="static" size="xl" fullscreen="xl-down" onHide={this.closeModal}>
+              <Modal
+                show={this.state.modalGroup !== null}
+                backdrop="static"
+                size="xl"
+                fullscreen="xl-down"
+                onHide={this.closeModal}>
                 <Modal.Header closeButton={!this.state.modalPending}>
                   <Modal.Title>
                     <FormattedMessage
@@ -112,6 +117,11 @@ class GroupsSuperadmin extends Component {
                 </Modal.Header>
 
                 <Modal.Body>
+                  <h5>
+                    <GroupIcon gapRight={3} className="text-muted" />
+                    {this.state.modalGroup?.fullName}
+                  </h5>
+
                   {this.state.modalError && (
                     <Callout variant="danger" className="mt-3">
                       <p>
@@ -154,6 +164,8 @@ GroupsSuperadmin.propTypes = {
   terms: ImmutablePropTypes.list,
   groups: ImmutablePropTypes.map,
   loadAsync: PropTypes.func.isRequired,
+  addAttribute: PropTypes.func.isRequired,
+  removeAttribute: PropTypes.func.isRequired,
 };
 
 export default connect(
@@ -166,5 +178,7 @@ export default connect(
   dispatch => ({
     loadAsync: (userId, expiration = DEFAULT_EXPIRATION) =>
       GroupsSuperadmin.loadAsync({ userId }, dispatch, expiration),
+    addAttribute: (groupId, key, value) => dispatch(addGroupAttribute(groupId, key, value)),
+    removeAttribute: (groupId, key, value) => dispatch(removeGroupAttribute(groupId, key, value)),
   })
 )(GroupsSuperadmin);
