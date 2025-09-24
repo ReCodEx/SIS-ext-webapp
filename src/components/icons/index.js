@@ -35,6 +35,7 @@ export const CodeFileIcon = props => <Icon {...props} icon={['far', 'file-code']
 export const CodeIcon = props => <Icon {...props} icon="code" />;
 export const CodeCompareIcon = props => <Icon {...props} icon="code-compare" />;
 export const CopyIcon = props => <Icon {...props} icon={['far', 'clipboard']} />;
+export const CourseIcon = props => <Icon {...props} icon="book" />;
 export const ChatIcon = props => <Icon {...props} icon={['far', 'comments']} />;
 export const DashboardIcon = props => <Icon {...props} icon="tachometer-alt" />;
 export const DeadlineIcon = props => <Icon {...props} icon="hourglass-half" />;
@@ -94,7 +95,6 @@ export const PointsInterpolationIcon = props => (
   <Icon icon="long-arrow-alt-right" className="text-body-secondary" transform={{ rotate: 33 }} {...props} />
 );
 export const RedoIcon = props => <Icon {...props} icon="redo-alt" />;
-export const ReferenceSolutionIcon = props => <Icon {...props} icon="book" />;
 export const RefreshIcon = props => <Icon {...props} icon="sync" />;
 export const RemoveIcon = props => <Icon {...props} icon="minus-circle" />;
 export const RemoveUserIcon = props => <Icon {...props} icon="user-slash" />;
