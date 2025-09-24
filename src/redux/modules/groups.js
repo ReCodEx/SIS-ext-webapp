@@ -19,14 +19,14 @@ export const additionalActionTypes = {
 const _fetchGroups = (affiliation, eventIds = undefined, courseIds = undefined) =>
   createApiAction({
     type: additionalActionTypes.FETCH,
-    endpoint: `/groups/${affiliation}`,
+    endpoint: `/groups${affiliation ? '/' : ''}${affiliation || ''}`,
     method: 'GET',
     meta: { affiliation },
     query: { eventIds, courseIds },
   });
 
+export const fetchAllGroups = () => _fetchGroups(undefined);
 export const fetchStudentGroups = eventIds => _fetchGroups('student', eventIds);
-
 export const fetchTeacherGroups = (eventIds, courseIds) => _fetchGroups('teacher', eventIds, courseIds);
 
 export const bindGroup = (groupId, event) =>

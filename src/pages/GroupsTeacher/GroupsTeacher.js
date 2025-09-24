@@ -424,11 +424,7 @@ class GroupsTeacher extends Component {
                       {this.state.modalError && (
                         <Callout variant="danger" className="mt-3">
                           <p>
-                            <FormattedMessage
-                              id="app.groupsTeacher.operationFailed"
-                              defaultMessage="The operation has failed"
-                            />
-                            :
+                            <FormattedMessage id="generic.operationFailed" defaultMessage="The operation has failed" />:
                           </p>
                           <pre>{this.state.modalError}</pre>
                         </Callout>
