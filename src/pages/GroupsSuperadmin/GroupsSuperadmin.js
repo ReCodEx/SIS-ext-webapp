@@ -2,19 +2,19 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import { connect } from 'react-redux';
-import { Modal } from 'react-bootstrap';
+import { Modal, Badge } from 'react-bootstrap';
 import { FormattedMessage } from 'react-intl';
+import { FORM_ERROR } from 'final-form';
 
 import Page from '../../components/layout/Page';
 import Box from '../../components/widgets/Box';
 import GroupsTreeView from '../../components/Groups/GroupsTreeView';
-import Button, { TheButtonGroup } from '../../components/widgets/TheButton';
-import { CloseIcon, GroupIcon, ManagementIcon } from '../../components/icons';
-// import ResourceRenderer from '../../components/helpers/ResourceRenderer';
+import AddAttributeForm from '../../components/forms/AddAttributeForm';
+import { GroupIcon, ManagementIcon } from '../../components/icons';
 
 import { fetchAllGroups, addGroupAttribute, removeGroupAttribute } from '../../redux/modules/groups.js';
 import { fetchUserIfNeeded } from '../../redux/modules/users.js';
-import { fetchAllTerms } from '../../redux/modules/terms.js';
+import { addNotification } from '../../redux/modules/notifications.js';
 import { loggedInUserIdSelector } from '../../redux/selectors/auth.js';
 import { getGroups } from '../../redux/selectors/groups.js';
 import { termsSelector } from '../../redux/selectors/terms.js';
@@ -25,21 +25,14 @@ import Callout from '../../components/widgets/Callout/Callout.js';
 
 const DEFAULT_EXPIRATION = 7; // days
 
-/*
-const getSortedTerms = lruMemoize(terms => {
-  const now = Math.floor(Date.now() / 1000);
-  return terms
-    .filter(term => term.teachersFrom <= now && term.teachersUntil >= now)
-    .sort((b, a) => a.year * 10 + a.term - (b.year * 10 + b.term));
-});
-
-const getGroupAdmins = group => {
-  const res = Object.values(group.admins)
-    .map(admin => admin.lastName)
-    .join(', ');
-  return res ? ` [${res}]` : '';
+const ADD_FORM_INITIAL_VALUES = {
+  mode: 'course',
+  course: '',
+  term: '',
+  group: '',
+  key: '',
+  value: '',
 };
-*/
 
 class GroupsSuperadmin extends Component {
   state = {
@@ -57,12 +50,20 @@ class GroupsSuperadmin extends Component {
       modalError: null,
     });
 
-  // handleGroupChange = ev => this.setState({ selectedGroupId: ev.target.value });
-
-  completeModalOperation = () => {
-    // const { loggedInUserId, loadAsync } = this.props;
-    // this.setState({ modalPending: true });
-    this.closeModal();
+  addAttributeFormSubmit = async values => {
+    if (this.state.modalGroup) {
+      const key = values.mode === 'other' ? values.key.trim() : values.mode;
+      const value = values.mode === 'other' ? values.value.trim() : values[values.mode].trim();
+      try {
+        await this.props.addAttribute(this.state.modalGroup.id, key, value);
+        this.closeModal();
+        return undefined; // no error
+      } catch (err) {
+        return { [FORM_ERROR]: err?.message || err.toString() };
+      }
+    } else {
+      return Promise.resolve();
+    }
   };
 
   componentDidMount() {
@@ -76,11 +77,7 @@ class GroupsSuperadmin extends Component {
   }
 
   static loadAsync = ({ userId }, dispatch, expiration = DEFAULT_EXPIRATION) =>
-    Promise.all([
-      dispatch(fetchUserIfNeeded(userId, { allowReload: true })),
-      dispatch(fetchAllGroups()),
-      dispatch(fetchAllTerms()),
-    ]);
+    Promise.all([dispatch(fetchUserIfNeeded(userId, { allowReload: true })), dispatch(fetchAllGroups())]);
 
   render() {
     const { loggedInUser, groups, removeAttribute } = this.props;
@@ -102,7 +99,7 @@ class GroupsSuperadmin extends Component {
               </Box>
 
               <Modal
-                show={this.state.modalGroup !== null}
+                show={Boolean(this.state.modalGroup)}
                 backdrop="static"
                 size="xl"
                 fullscreen="xl-down"
@@ -122,6 +119,28 @@ class GroupsSuperadmin extends Component {
                     {this.state.modalGroup?.fullName}
                   </h5>
 
+                  {this.state.modalGroup?.attributes && Object.keys(this.state.modalGroup?.attributes).length > 0 && (
+                    <div>
+                      <strong className="me-2">
+                        <FormattedMessage
+                          id="app.groupsSupervisor.addAttributeModal.existingAttributes"
+                          defaultMessage="Existing attributes"
+                        />
+                        :
+                      </strong>
+
+                      {Object.keys(this.state.modalGroup?.attributes || {}).map(key =>
+                        this.state.modalGroup.attributes[key].map(value => (
+                          <Badge key={`${key}=${value}`} className="text-nowrap ms-1" bg="secondary">
+                            {key}: {value}
+                          </Badge>
+                        ))
+                      )}
+                    </div>
+                  )}
+
+                  <hr />
+
                   {this.state.modalError && (
                     <Callout variant="danger" className="mt-3">
                       <p>
@@ -130,18 +149,14 @@ class GroupsSuperadmin extends Component {
                       <pre>{this.state.modalError}</pre>
                     </Callout>
                   )}
-                </Modal.Body>
 
-                <Modal.Footer>
-                  <div className="text-center w-100">
-                    <TheButtonGroup>
-                      <Button variant="secondary" disabled={this.state.modalPending} onClick={this.closeModal}>
-                        <CloseIcon gapRight />
-                        <FormattedMessage id="generic.cancel" defaultMessage="Cancel" />
-                      </Button>
-                    </TheButtonGroup>
-                  </div>
-                </Modal.Footer>
+                  <AddAttributeForm
+                    initialValues={ADD_FORM_INITIAL_VALUES}
+                    onSubmit={this.addAttributeFormSubmit}
+                    onClose={this.closeModal}
+                    attributes={this.state.modalGroup?.attributes || null}
+                  />
+                </Modal.Body>
               </Modal>
             </>
           ) : (
@@ -179,6 +194,9 @@ export default connect(
     loadAsync: (userId, expiration = DEFAULT_EXPIRATION) =>
       GroupsSuperadmin.loadAsync({ userId }, dispatch, expiration),
     addAttribute: (groupId, key, value) => dispatch(addGroupAttribute(groupId, key, value)),
-    removeAttribute: (groupId, key, value) => dispatch(removeGroupAttribute(groupId, key, value)),
+    removeAttribute: (groupId, key, value) =>
+      dispatch(removeGroupAttribute(groupId, key, value)).catch(err =>
+        dispatch(addNotification(err?.message || err.toString(), false))
+      ),
   })
 )(GroupsSuperadmin);

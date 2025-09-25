@@ -240,7 +240,7 @@ class User extends Component {
                         diffIndex.email ? (
                           <FormattedMessage
                             id="app.user.syncButtonConfirmEmail"
-                            defaultMessage="You are about to update your e-mail address so you will be required to verify it afterwards in ReCodEx. The e-mail address is also used as your local login if you already have local account (yout local password will not be changed)."
+                            defaultMessage="You are about to update your e-mail address so you will be required to verify it afterwards in ReCodEx. The e-mail address is also used as your local login if you already have local account (your local password will not be changed)."
                           />
                         ) : null
                       }
