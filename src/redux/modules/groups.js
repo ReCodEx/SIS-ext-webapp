@@ -84,12 +84,19 @@ export const removeGroupAttribute = (groupId, key, value) =>
 /**
  * Reducer
  */
+const fixAttributes = payload => {
+  Object.values(payload).forEach(group => {
+    group.attributes = !group.attributes || Array.isArray(group.attributes) ? {} : group.attributes;
+  });
+  return payload;
+};
+
 const reducer = handleActions(
   {
     [additionalActionTypes.FETCH_PENDING]: state => state.set('state', resourceStatus.RELOADING),
 
     [additionalActionTypes.FETCH_FULFILLED]: (state, { payload }) =>
-      createRecord({ state: resourceStatus.FULFILLED, data: payload }),
+      createRecord({ state: resourceStatus.FULFILLED, data: fixAttributes(payload) }),
 
     [additionalActionTypes.FETCH_REJECTED]: (state, { payload }) =>
       state.set('state', resourceStatus.FAILED).set('error', payload),
