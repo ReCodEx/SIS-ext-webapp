@@ -218,7 +218,7 @@ export default connect(
   }),
   dispatch => ({
     loadAsync: (userId, expiration = DEFAULT_EXPIRATION) => GroupsStudent.loadAsync({ userId }, dispatch, expiration),
-    joinGroup: (groupId, reloadGroupsOFCourses) =>
-      dispatch(joinGroup(groupId)).then(() => dispatch(fetchStudentGroups(reloadGroupsOFCourses))),
+    joinGroup: (groupId, reloadGroupsOfCourses) =>
+      dispatch(joinGroup(groupId)).then(() => dispatch(fetchStudentGroups(reloadGroupsOfCourses))),
   })
 )(GroupsStudent);
