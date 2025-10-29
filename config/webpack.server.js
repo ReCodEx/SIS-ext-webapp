@@ -23,9 +23,8 @@ export default {
   resolve: {
     alias: {
       moment: 'moment/moment.js',
-      'react-ace': 'react-ace-bad', // a hack to rid ourselves of ace module in server mode
     },
-    fallback: { 'react-ace-bad': false },
+    fallback: {},
   },
   target: 'node',
   mode: process.env.NODE_ENV,

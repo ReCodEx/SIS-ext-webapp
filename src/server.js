@@ -24,7 +24,7 @@ import '@formatjs/intl-relativetimeformat/locale-data/cs.js';
 
 /**
  * Init server-side rendering of the app using Express with
- * some basic middleware for tempaltes and static file serving.
+ * some basic middleware for templates and static file serving.
  */
 
 function getFileName(pattern, addPrefix = '') {
@@ -61,10 +61,9 @@ app.use(cookieParser());
  * At present, we have no additional support for SSR and some features (like user IP locking)
  * will not work at all. SSR may be reintroduce in the future, but this should be rewritten.
  */
-const renderPage = (res, store = null, html = '') => {
+const renderPage = res => {
   const head = Helmet.rewind();
   res.render('index', {
-    html,
     head,
     bundle,
     style,
