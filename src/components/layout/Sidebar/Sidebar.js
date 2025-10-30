@@ -61,6 +61,7 @@ const Sidebar = ({
         <div data-overlayscrollbars-viewport="scrollbarHidden">
           <nav className="mt-2">
             <ul
+              key={currentUrl /* a hack that forces menu re-rendering */}
               className="nav nav-pills sidebar-menu flex-column"
               data-lte-toggle="treeview"
               role="menu"
@@ -114,6 +115,7 @@ const Sidebar = ({
                   title={<FormattedMessage id="app.backToReCodEx" defaultMessage="Back to ReCodEx" />}
                   icon="person-walking-arrow-loop-left"
                   link={getReturnUrl()}
+                  currentPath={currentUrl}
                 />
               )}
             </ul>

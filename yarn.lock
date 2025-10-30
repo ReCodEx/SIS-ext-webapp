@@ -3176,10 +3176,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"admin-lte@npm:4.0.0-rc3":
-  version: 4.0.0-rc3
-  resolution: "admin-lte@npm:4.0.0-rc3"
-  checksum: af5892d8e587d31f4c0921d99118f1901eca79afcabe71f3160090eab35b50185a704e2dd9afa1695894ce082cb16e86bd4aaf96cf54392e8e8aff0cb03b7e77
+"admin-lte@npm:4.0.0-rc4":
+  version: 4.0.0-rc4
+  resolution: "admin-lte@npm:4.0.0-rc4"
+  checksum: 8927c3e6e413f371cf8e171095a688b462581d3f06b43fcb3542d754865d013e180039d01af10fdc0b31b5bec95e661a40bda4c8bc5187599270ea8f8cb41519
   languageName: node
   linkType: hard
 
@@ -11966,7 +11966,7 @@ __metadata:
     "@fortawesome/react-fontawesome": ^3.1.0
     "@iktakahiro/markdown-it-katex": ^4.0.1
     "@reduxjs/toolkit": ^2.9.2
-    admin-lte: 4.0.0-rc3
+    admin-lte: 4.0.0-rc4
     babel-loader: ^10.0.0
     babel-plugin-formatjs: ^10.5.41
     babel-plugin-transform-flow-strip-types: ^6.22.0
