@@ -17,7 +17,8 @@ const MenuItem = ({ title, icon = 'circle', link, notificationsCount = 0, inNewT
       <Link
         to={link}
         target={inNewTab ? '_blank' : undefined}
-        className={classnames({ 'nav-link': true, 'align-items-center': true, active, [`bg-${SKIN}`]: active })}>
+        className={classnames({ 'nav-link': true, 'align-items-center': true, active, [`bg-${SKIN}`]: active })}
+        onClick={ev => ev.stopPropagation()}>
         <Icon icon={icon} fixedWidth className="nav-icon" />
         <p className="sidebarMenuItem">{title}</p>
         {notificationsCount > 0 && <span className="right badge badge-warning">{notificationsCount}</span>}

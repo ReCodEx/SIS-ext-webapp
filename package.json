@@ -36,7 +36,7 @@
     "@fortawesome/react-fontawesome": "^3.1.0",
     "@iktakahiro/markdown-it-katex": "^4.0.1",
     "@reduxjs/toolkit": "^2.9.2",
-    "admin-lte": "4.0.0-rc3",
+    "admin-lte": "4.0.0-rc4",
     "babel-plugin-formatjs": "^10.5.41",
     "browser-cookies": "^1.2.0",
     "buffer": "^6.0.3",
