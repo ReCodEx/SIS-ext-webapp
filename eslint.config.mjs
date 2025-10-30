@@ -41,7 +41,6 @@ export default [{
         globals: {
             ...globals.browser,
             ...globals.node,
-            ...globals.mocha,
             __DEVELOPMENT__: true,
             __CLIENT__: true,
             __SERVER__: true,
@@ -61,7 +60,7 @@ export default [{
         'import/ignore': ['node_modules', '.less$'],
 
         react: {
-            version: '18.3.1',
+            version: '19.2.0',
         },
     },
 
