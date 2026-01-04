@@ -72,16 +72,9 @@ const validate = lruMemoize(attributes => values => {
   return errors;
 });
 
-export const INITIAL_VALUES = {
-  mode: 'course',
-  course: '',
-  term: '',
-  group: '',
-  key: '',
-  value: '',
-};
+export const INITIAL_VALUES = {};
 
-const AddAttributeForm = ({ initialValues, onSubmit, onClose, attributes = EMPTY_OBJ }) => {
+const PlantTermGroupsForm = ({ initialValues, onSubmit, onClose, attributes = EMPTY_OBJ }) => {
   return (
     <Form
       onSubmit={onSubmit}
@@ -252,11 +245,11 @@ const AddAttributeForm = ({ initialValues, onSubmit, onClose, attributes = EMPTY
   );
 };
 
-AddAttributeForm.propTypes = {
+PlantTermGroupsForm.propTypes = {
   initialValues: PropTypes.object.isRequired,
   onSubmit: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
   attributes: PropTypes.object,
 };
 
-export default AddAttributeForm;
+export default PlantTermGroupsForm;

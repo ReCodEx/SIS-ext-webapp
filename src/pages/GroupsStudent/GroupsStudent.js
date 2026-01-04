@@ -9,8 +9,12 @@ import Page from '../../components/layout/Page';
 import Box from '../../components/widgets/Box';
 import CoursesGroupsList from '../../components/Groups/CoursesGroupsList';
 import Button from '../../components/widgets/TheButton';
-import { DownloadIcon, JoinGroupIcon, LoadingIcon, RefreshIcon, TermIcon } from '../../components/icons';
+import TermLabel from '../../components/Terms/TermLabel';
+import Callout from '../../components/widgets/Callout';
+import DateTime from '../../components/widgets/DateTime';
+import { DownloadIcon, JoinGroupIcon, LoadingIcon, RefreshIcon } from '../../components/icons';
 import ResourceRenderer from '../../components/helpers/ResourceRenderer';
+import { isStudentRole } from '../../components/helpers/usersRoles.js';
 
 import { fetchStudentCourses } from '../../redux/modules/courses.js';
 import { fetchStudentGroups, joinGroup } from '../../redux/modules/groups.js';
@@ -25,11 +29,6 @@ import {
 import { getGroups } from '../../redux/selectors/groups.js';
 import { termsSelector } from '../../redux/selectors/terms.js';
 import { loggedInUserSelector } from '../../redux/selectors/users.js';
-
-import { isStudentRole } from '../../components/helpers/usersRoles.js';
-import Callout from '../../components/widgets/Callout/Callout.js';
-import DateTime from '../../components/widgets/DateTime/DateTime.js';
-
 import { isReady } from '../../redux/helpers/resourceManager';
 
 const DEFAULT_EXPIRATION = 7; // days
@@ -128,20 +127,7 @@ class GroupsStudent extends Component {
                         key={`${term.year}-${term.term}`}
                         title={
                           <>
-                            <TermIcon gapRight={3} className="text-muted" />
-                            <strong>
-                              {term.year}-{term.term}
-                            </strong>{' '}
-                            <small className="text-muted ms-2">
-                              (
-                              {term.term === 1 && (
-                                <FormattedMessage id="app.groups.term.winter" defaultMessage="Winter Term" />
-                              )}
-                              {term.term === 2 && (
-                                <FormattedMessage id="app.groups.term.summer" defaultMessage="Summer Term" />
-                              )}
-                              )
-                            </small>
+                            <TermLabel term={term} icon emphasize longNames />
                             {refetchedSelector(term.year, term.term) && (
                               <DownloadIcon
                                 gapLeft={3}

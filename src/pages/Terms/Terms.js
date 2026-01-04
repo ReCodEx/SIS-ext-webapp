@@ -13,7 +13,10 @@ import Box from '../../components/widgets/Box';
 import DateTime from '../../components/widgets/DateTime';
 import Button, { TheButtonGroup } from '../../components/widgets/TheButton';
 import { DeleteIcon, EditIcon, RefreshIcon, TermIcon } from '../../components/icons';
+import EditTermForm from '../../components/forms/EditTermForm';
+import TermLabel from '../../components/Terms/TermLabel';
 import ResourceRenderer from '../../components/helpers/ResourceRenderer';
+import { isSuperadminRole, isStudentRole, isSupervisorRole } from '../../components/helpers/usersRoles.js';
 
 import { fetchUserIfNeeded } from '../../redux/modules/users.js';
 import { fetchAllTerms, fetchTerm, createTerm, updateTerm, deleteTerm } from '../../redux/modules/terms.js';
@@ -21,9 +24,6 @@ import { addNotification } from '../../redux/modules/notifications.js';
 import { loggedInUserSelector } from '../../redux/selectors/users.js';
 import { loggedInUserIdSelector } from '../../redux/selectors/auth.js';
 import { termsSelector } from '../../redux/selectors/terms.js';
-
-import { isSuperadminRole, isStudentRole, isSupervisorRole } from '../../components/helpers/usersRoles.js';
-import EditTermForm from '../../components/forms/EditTermForm/EditTermForm.js';
 
 const getTermInitialValues = lruMemoize((terms, id = null) => {
   const selectedTerm = id && terms.find(t => t.id === id);
@@ -253,13 +253,7 @@ class Terms extends Component {
                             {getSortedTerms(terms).map((term, idx) => (
                               <tr key={term.id || idx} className="align-middle">
                                 <td className="text-nowrap">
-                                  {term.year}-{term.term} (
-                                  {term.term === 1 ? (
-                                    <FormattedMessage id="app.terms.table.winter" defaultMessage="Winter" />
-                                  ) : (
-                                    <FormattedMessage id="app.terms.table.summer" defaultMessage="Summer" />
-                                  )}
-                                  )
+                                  <TermLabel term={term} />
                                 </td>
                                 <td className="text-nowrap">
                                   {term.beginning ? (

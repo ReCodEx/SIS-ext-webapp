@@ -2,17 +2,25 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import { connect } from 'react-redux';
-import { Modal, Badge } from 'react-bootstrap';
+import { Modal, Badge, Dropdown, ButtonGroup } from 'react-bootstrap';
 import { FormattedMessage } from 'react-intl';
 import { FORM_ERROR } from 'final-form';
 
 import Page from '../../components/layout/Page';
 import Box from '../../components/widgets/Box';
 import GroupsTreeView from '../../components/Groups/GroupsTreeView';
-import AddAttributeForm from '../../components/forms/AddAttributeForm';
-import { GroupIcon, ManagementIcon } from '../../components/icons';
+import TermLabel from '../../components/Terms/TermLabel';
+import AddAttributeForm, { INITIAL_VALUES as ADD_FORM_INITIAL_VALUES } from '../../components/forms/AddAttributeForm';
+import PlantTermGroupsForm, {
+  INITIAL_VALUES as PLANT_FORM_INITIAL_VALUES,
+} from '../../components/forms/PlantTermGroupsForm';
+import Icon, { GroupIcon, ManagementIcon } from '../../components/icons';
+import ResourceRenderer from '../../components/helpers/ResourceRenderer';
+import Button from '../../components/widgets/TheButton';
+import Callout from '../../components/widgets/Callout';
 
 import { fetchAllGroups, addGroupAttribute, removeGroupAttribute } from '../../redux/modules/groups.js';
+import { fetchAllTerms } from '../../redux/modules/terms.js';
 import { fetchUserIfNeeded } from '../../redux/modules/users.js';
 import { addNotification } from '../../redux/modules/notifications.js';
 import { loggedInUserIdSelector } from '../../redux/selectors/auth.js';
@@ -21,34 +29,31 @@ import { termsSelector } from '../../redux/selectors/terms.js';
 import { loggedInUserSelector } from '../../redux/selectors/users.js';
 
 import { isSuperadminRole } from '../../components/helpers/usersRoles.js';
-import Callout from '../../components/widgets/Callout/Callout.js';
 
 const DEFAULT_EXPIRATION = 7; // days
-
-const ADD_FORM_INITIAL_VALUES = {
-  mode: 'course',
-  course: '',
-  term: '',
-  group: '',
-  key: '',
-  value: '',
-};
 
 class GroupsSuperadmin extends Component {
   state = {
     modalGroup: null,
-    modalPending: false,
-    modalError: null,
+    modalGroupPending: false,
+    modalGroupError: null,
+    plantTerm: null,
+    modalPlant: false,
   };
 
-  openModal = modalGroup => this.setState({ modalGroup, modalPending: false, modalError: null });
+  openModalGroup = modalGroup =>
+    this.setState({ modalGroup, modalGroupPending: false, modalGroupError: null, modalPlant: false });
 
-  closeModal = () =>
+  closeModalGroup = () =>
     this.setState({
       modalGroup: null,
-      modalPending: false,
-      modalError: null,
+      modalGroupPending: false,
+      modalGroupError: null,
     });
+
+  openModalPlant = () => this.setState({ modalPlant: true, modalGroup: null });
+
+  closeModalPlant = () => this.setState({ modalPlant: false });
 
   addAttributeFormSubmit = async values => {
     if (this.state.modalGroup) {
@@ -56,7 +61,7 @@ class GroupsSuperadmin extends Component {
       const value = values.mode === 'other' ? values.value.trim() : values[values.mode].trim();
       try {
         await this.props.addAttribute(this.state.modalGroup.id, key, value);
-        this.closeModal();
+        this.closeModalGroup();
         return undefined; // no error
       } catch (err) {
         return { [FORM_ERROR]: err?.message || err.toString() };
@@ -77,10 +82,14 @@ class GroupsSuperadmin extends Component {
   }
 
   static loadAsync = ({ userId }, dispatch, expiration = DEFAULT_EXPIRATION) =>
-    Promise.all([dispatch(fetchUserIfNeeded(userId, { allowReload: true })), dispatch(fetchAllGroups())]);
+    Promise.all([
+      dispatch(fetchUserIfNeeded(userId, { allowReload: true })),
+      dispatch(fetchAllGroups()),
+      dispatch(fetchAllTerms()),
+    ]);
 
   render() {
-    const { loggedInUser, groups, removeAttribute } = this.props;
+    const { loggedInUser, groups, terms, removeAttribute } = this.props;
 
     return (
       <Page
@@ -91,74 +100,135 @@ class GroupsSuperadmin extends Component {
         }>
         {(user, groups) =>
           isSuperadminRole(user.role) ? (
-            <>
-              <Box
-                unlimitedHeight
-                title={<FormattedMessage id="app.groupsSupervisor.currentlyManagedGroups" defaultMessage="Groups" />}>
-                <GroupsTreeView groups={groups} addAttribute={this.openModal} removeAttribute={removeAttribute} />
-              </Box>
+            <ResourceRenderer resourceArray={terms}>
+              {terms => (
+                <>
+                  <Box
+                    unlimitedHeight
+                    title={
+                      <FormattedMessage id="app.groupsSupervisor.currentlyManagedGroups" defaultMessage="Groups" />
+                    }>
+                    <>
+                      <GroupsTreeView
+                        groups={groups}
+                        addAttribute={this.openModalGroup}
+                        removeAttribute={removeAttribute}
+                      />
+                      <hr />
 
-              <Modal
-                show={Boolean(this.state.modalGroup)}
-                backdrop="static"
-                size="xl"
-                fullscreen="xl-down"
-                onHide={this.closeModal}>
-                <Modal.Header closeButton={!this.state.modalPending}>
-                  <Modal.Title>
-                    <FormattedMessage
-                      id="app.groupsSupervisor.addAttributeModal.title"
-                      defaultMessage="Add Attribute to Group"
-                    />
-                  </Modal.Title>
-                </Modal.Header>
+                      <div className="text-center">
+                        {terms && terms.length > 0 && (
+                          <Dropdown as={ButtonGroup}>
+                            <Button variant="success">
+                              <Icon icon="leaf" gapRight />
+                              <FormattedMessage
+                                id="app.groupsSupervisor.plantTermButton"
+                                defaultMessage="Plant groups for"
+                              />{' '}
+                              <TermLabel term={this.state.plantTerm || terms[0]} />
+                            </Button>
+                            <Dropdown.Toggle split variant="success" id="dropdown-split-basic" />
+                            <Dropdown.Menu>
+                              {terms.map(term => (
+                                <Dropdown.Item key={term.id} onClick={() => this.setState({ plantTerm: term })}>
+                                  <TermLabel term={term} />
+                                </Dropdown.Item>
+                              ))}
+                            </Dropdown.Menu>
+                          </Dropdown>
+                        )}
+                      </div>
+                    </>
+                  </Box>
 
-                <Modal.Body>
-                  <h5>
-                    <GroupIcon gapRight={3} className="text-muted" />
-                    {this.state.modalGroup?.fullName}
-                  </h5>
-
-                  {this.state.modalGroup?.attributes && Object.keys(this.state.modalGroup?.attributes).length > 0 && (
-                    <div>
-                      <strong className="me-2">
+                  <Modal
+                    show={Boolean(this.state.modalGroup)}
+                    backdrop="static"
+                    size="xl"
+                    fullscreen="xl-down"
+                    onHide={this.closeModalGroup}>
+                    <Modal.Header closeButton={!this.state.modalGroupPending}>
+                      <Modal.Title>
                         <FormattedMessage
-                          id="app.groupsSupervisor.addAttributeModal.existingAttributes"
-                          defaultMessage="Existing attributes"
+                          id="app.groupsSupervisor.addAttributeModal.title"
+                          defaultMessage="Add Attribute to Group"
                         />
-                        :
-                      </strong>
+                      </Modal.Title>
+                    </Modal.Header>
 
-                      {Object.keys(this.state.modalGroup?.attributes || {}).map(key =>
-                        this.state.modalGroup.attributes[key].map(value => (
-                          <Badge key={`${key}=${value}`} className="text-nowrap ms-1" bg="secondary">
-                            {key}: {value}
-                          </Badge>
-                        ))
+                    <Modal.Body>
+                      <h5>
+                        <GroupIcon gapRight={3} className="text-muted" />
+                        {this.state.modalGroup?.fullName}
+                      </h5>
+
+                      {this.state.modalGroup?.attributes &&
+                        Object.keys(this.state.modalGroup?.attributes).length > 0 && (
+                          <div>
+                            <strong className="me-2">
+                              <FormattedMessage
+                                id="app.groupsSupervisor.addAttributeModal.existingAttributes"
+                                defaultMessage="Existing attributes"
+                              />
+                              :
+                            </strong>
+
+                            {Object.keys(this.state.modalGroup?.attributes || {}).map(key =>
+                              this.state.modalGroup.attributes[key].map(value => (
+                                <Badge key={`${key}=${value}`} className="text-nowrap ms-1" bg="secondary">
+                                  {key}: {value}
+                                </Badge>
+                              ))
+                            )}
+                          </div>
+                        )}
+
+                      <hr />
+
+                      {this.state.modalGroupError && (
+                        <Callout variant="danger" className="mt-3">
+                          <p>
+                            <FormattedMessage id="generic.operationFailed" defaultMessage="The operation has failed" />:
+                          </p>
+                          <pre>{this.state.modalGroupError}</pre>
+                        </Callout>
                       )}
-                    </div>
-                  )}
 
-                  <hr />
+                      <AddAttributeForm
+                        initialValues={ADD_FORM_INITIAL_VALUES}
+                        onSubmit={this.addAttributeFormSubmit}
+                        onClose={this.closeModalGroup}
+                        attributes={this.state.modalGroup?.attributes || null}
+                      />
+                    </Modal.Body>
+                  </Modal>
 
-                  {this.state.modalError && (
-                    <Callout variant="danger" className="mt-3">
-                      <p>
-                        <FormattedMessage id="generic.operationFailed" defaultMessage="The operation has failed" />:
-                      </p>
-                      <pre>{this.state.modalError}</pre>
-                    </Callout>
-                  )}
+                  <Modal
+                    show={Boolean(this.state.modalPlant)}
+                    backdrop="static"
+                    size="xl"
+                    fullscreen="xl-down"
+                    onHide={this.closeModalPlant}>
+                    <Modal.Header closeButton>
+                      <Modal.Title>
+                        <FormattedMessage
+                          id="app.groupsSupervisor.plantTermGroupsModal.title"
+                          defaultMessage="Plant Groups for Term"
+                        />
+                      </Modal.Title>
+                    </Modal.Header>
 
-                  <AddAttributeForm
-                    initialValues={ADD_FORM_INITIAL_VALUES}
-                    onSubmit={this.addAttributeFormSubmit}
-                    onClose={this.closeModal}
-                    attributes={this.state.modalGroup?.attributes || null}
-                  />
-                </Modal.Body>
-              </Modal>
-            </>
+                    <Modal.Body>
+                      <PlantTermGroupsForm
+                        initialValues={PLANT_FORM_INITIAL_VALUES}
+                        onSubmit={this.addAttributeFormSubmit}
+                        onClose={this.closeModalPlant}
+                      />
+                    </Modal.Body>
+                  </Modal>
+                </>
+              )}
+            </ResourceRenderer>
           ) : (
             <Callout type="warning">
               <FormattedMessage

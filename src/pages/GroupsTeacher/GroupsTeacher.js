@@ -10,6 +10,7 @@ import Page from '../../components/layout/Page';
 import Box from '../../components/widgets/Box';
 import CoursesGroupsList from '../../components/Groups/CoursesGroupsList';
 import Button, { TheButtonGroup } from '../../components/widgets/TheButton';
+import TermLabel from '../../components/Terms/TermLabel';
 import {
   CloseIcon,
   DownloadIcon,
@@ -18,9 +19,15 @@ import {
   LoadingIcon,
   RefreshIcon,
   SuccessIcon,
-  TermIcon,
 } from '../../components/icons';
 import ResourceRenderer from '../../components/helpers/ResourceRenderer';
+import { isSupervisorRole } from '../../components/helpers/usersRoles.js';
+import Callout from '../../components/widgets/Callout/Callout.js';
+import DateTime from '../../components/widgets/DateTime/DateTime.js';
+import InsetPanel from '../../components/widgets/InsetPanel';
+import DayOfWeek from '../../components/widgets/DayOfWeek';
+import Explanation from '../../components/widgets/Explanation';
+import { minutesToTimeStr } from '../../components/helpers/stringFormatters.js';
 
 import { fetchTeacherCourses } from '../../redux/modules/courses.js';
 import { fetchTeacherGroups, bindGroup, unbindGroup, createGroup } from '../../redux/modules/groups.js';
@@ -35,15 +42,6 @@ import {
 import { getGroups } from '../../redux/selectors/groups.js';
 import { termsSelector } from '../../redux/selectors/terms.js';
 import { loggedInUserSelector } from '../../redux/selectors/users.js';
-
-import { isSupervisorRole } from '../../components/helpers/usersRoles.js';
-import Callout from '../../components/widgets/Callout/Callout.js';
-import DateTime from '../../components/widgets/DateTime/DateTime.js';
-import InsetPanel from '../../components/widgets/InsetPanel';
-import DayOfWeek from '../../components/widgets/DayOfWeek';
-import Explanation from '../../components/widgets/Explanation';
-import { minutesToTimeStr } from '../../components/helpers/stringFormatters.js';
-
 import { isReady } from '../../redux/helpers/resourceManager';
 
 const DEFAULT_EXPIRATION = 7; // days
@@ -209,20 +207,7 @@ class GroupsTeacher extends Component {
                         key={`${term.year}-${term.term}`}
                         title={
                           <>
-                            <TermIcon gapRight={3} className="text-muted" />
-                            <strong>
-                              {term.year}-{term.term}
-                            </strong>{' '}
-                            <small className="text-muted ms-2">
-                              (
-                              {term.term === 1 && (
-                                <FormattedMessage id="app.groups.term.winter" defaultMessage="Winter Term" />
-                              )}
-                              {term.term === 2 && (
-                                <FormattedMessage id="app.groups.term.summer" defaultMessage="Summer Term" />
-                              )}
-                              )
-                            </small>
+                            <TermLabel term={term} icon emphasize longNames />
                             {refetchedSelector(term.year, term.term) && (
                               <DownloadIcon
                                 gapLeft={3}
