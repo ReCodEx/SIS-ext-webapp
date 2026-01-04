@@ -12,9 +12,9 @@ import GroupsTreeView from '../../components/Groups/GroupsTreeView';
 import TermLabel from '../../components/Terms/TermLabel';
 import AddAttributeForm, { INITIAL_VALUES as ADD_FORM_INITIAL_VALUES } from '../../components/forms/AddAttributeForm';
 import PlantTermGroupsForm, {
-  INITIAL_VALUES as PLANT_FORM_INITIAL_VALUES,
+  initialValuesCreator as plantFormInitialValuesCreator,
 } from '../../components/forms/PlantTermGroupsForm';
-import Icon, { GroupIcon, ManagementIcon } from '../../components/icons';
+import Icon, { CloseIcon, GroupIcon, ManagementIcon } from '../../components/icons';
 import ResourceRenderer from '../../components/helpers/ResourceRenderer';
 import Button from '../../components/widgets/TheButton';
 import Callout from '../../components/widgets/Callout';
@@ -39,6 +39,7 @@ class GroupsSuperadmin extends Component {
     modalGroupError: null,
     plantTerm: null,
     modalPlant: false,
+    plantTexts: null,
   };
 
   openModalGroup = modalGroup =>
@@ -55,6 +56,8 @@ class GroupsSuperadmin extends Component {
 
   closeModalPlant = () => this.setState({ modalPlant: false });
 
+  cancelGroupPlanting = () => this.setState({ plantTexts: null });
+
   addAttributeFormSubmit = async values => {
     if (this.state.modalGroup) {
       const key = values.mode === 'other' ? values.key.trim() : values.mode;
@@ -69,6 +72,11 @@ class GroupsSuperadmin extends Component {
     } else {
       return Promise.resolve();
     }
+  };
+
+  plantTermGroupsFormSubmit = plantTexts => {
+    this.setState({ plantTexts });
+    this.closeModalPlant();
   };
 
   componentDidMount() {
@@ -109,6 +117,23 @@ class GroupsSuperadmin extends Component {
                       <FormattedMessage id="app.groupsSupervisor.currentlyManagedGroups" defaultMessage="Groups" />
                     }>
                     <>
+                      {this.state.plantTexts && (
+                        <Callout variant="success" icon="leaf">
+                          <h5>
+                            <FormattedMessage
+                              id="app.groupsSupervisor.plantTermGroupsInfo"
+                              defaultMessage="Planting groups for term {termLabel}"
+                              values={{ termLabel: <TermLabel term={this.state.plantTerm || terms[0]} /> }}
+                            />
+                          </h5>
+
+                          <Button variant="secondary" size="sm" onClick={this.cancelGroupPlanting}>
+                            <CloseIcon gapRight />
+                            <FormattedMessage id="generic.cancel" defaultMessage="Cancel" />
+                          </Button>
+                        </Callout>
+                      )}
+
                       <GroupsTreeView
                         groups={groups}
                         addAttribute={this.openModalGroup}
@@ -117,9 +142,9 @@ class GroupsSuperadmin extends Component {
                       <hr />
 
                       <div className="text-center">
-                        {terms && terms.length > 0 && (
+                        {terms && terms.length > 0 && !this.state.plantTexts && (
                           <Dropdown as={ButtonGroup}>
-                            <Button variant="success">
+                            <Button variant="success" onClick={this.openModalPlant}>
                               <Icon icon="leaf" gapRight />
                               <FormattedMessage
                                 id="app.groupsSupervisor.plantTermButton"
@@ -136,6 +161,16 @@ class GroupsSuperadmin extends Component {
                               ))}
                             </Dropdown.Menu>
                           </Dropdown>
+                        )}
+
+                        {this.state.plantTexts && (
+                          <Button variant="secondary" onClick={this.cancelGroupPlanting}>
+                            <Icon icon="leaf" gapRight />
+                            <FormattedMessage
+                              id="app.groupsSupervisor.cancelPlantTermButton"
+                              defaultMessage="Cancel Group Planting"
+                            />
+                          </Button>
                         )}
                       </div>
                     </>
@@ -203,29 +238,32 @@ class GroupsSuperadmin extends Component {
                     </Modal.Body>
                   </Modal>
 
-                  <Modal
-                    show={Boolean(this.state.modalPlant)}
-                    backdrop="static"
-                    size="xl"
-                    fullscreen="xl-down"
-                    onHide={this.closeModalPlant}>
-                    <Modal.Header closeButton>
-                      <Modal.Title>
-                        <FormattedMessage
-                          id="app.groupsSupervisor.plantTermGroupsModal.title"
-                          defaultMessage="Plant Groups for Term"
-                        />
-                      </Modal.Title>
-                    </Modal.Header>
+                  {terms && terms.length > 0 && (
+                    <Modal
+                      show={Boolean(this.state.modalPlant)}
+                      backdrop="static"
+                      size="xl"
+                      fullscreen="xl-down"
+                      onHide={this.closeModalPlant}>
+                      <Modal.Header closeButton>
+                        <Modal.Title>
+                          <FormattedMessage
+                            id="app.groupsSupervisor.plantTermGroupsModal.title"
+                            defaultMessage="Define Group Parameters for Term"
+                          />{' '}
+                          <TermLabel term={this.state.plantTerm || terms[0]} />
+                        </Modal.Title>
+                      </Modal.Header>
 
-                    <Modal.Body>
-                      <PlantTermGroupsForm
-                        initialValues={PLANT_FORM_INITIAL_VALUES}
-                        onSubmit={this.addAttributeFormSubmit}
-                        onClose={this.closeModalPlant}
-                      />
-                    </Modal.Body>
-                  </Modal>
+                      <Modal.Body>
+                        <PlantTermGroupsForm
+                          initialValues={plantFormInitialValuesCreator(this.state.plantTerm || terms[0])}
+                          onSubmit={this.plantTermGroupsFormSubmit}
+                          onClose={this.closeModalPlant}
+                        />
+                      </Modal.Body>
+                    </Modal>
+                  )}
                 </>
               )}
             </ResourceRenderer>
