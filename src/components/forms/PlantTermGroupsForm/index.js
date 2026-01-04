@@ -1,3 +1,3 @@
-import PlantTermGroupsForm, { INITIAL_VALUES } from './PlantTermGroupsForm.js';
+import PlantTermGroupsForm, { initialValuesCreator } from './PlantTermGroupsForm.js';
 export default PlantTermGroupsForm;
-export { INITIAL_VALUES };
+export { initialValuesCreator };
