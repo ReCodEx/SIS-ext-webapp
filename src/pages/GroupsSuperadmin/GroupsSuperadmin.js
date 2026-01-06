@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import { connect } from 'react-redux';
-import { Modal, Badge, Dropdown, ButtonGroup } from 'react-bootstrap';
+import { Modal, Badge, Dropdown, ButtonGroup, Row, Col } from 'react-bootstrap';
 import { FormattedMessage } from 'react-intl';
 import { FORM_ERROR } from 'final-form';
 
@@ -18,6 +18,7 @@ import Icon, { CloseIcon, GroupIcon, ManagementIcon } from '../../components/ico
 import ResourceRenderer from '../../components/helpers/ResourceRenderer';
 import Button from '../../components/widgets/TheButton';
 import Callout from '../../components/widgets/Callout';
+import Markdown from '../../components/widgets/Markdown';
 
 import { fetchAllGroups, addGroupAttribute, removeGroupAttribute } from '../../redux/modules/groups.js';
 import { fetchAllTerms } from '../../redux/modules/terms.js';
@@ -126,6 +127,41 @@ class GroupsSuperadmin extends Component {
                               values={{ termLabel: <TermLabel term={this.state.plantTerm || terms[0]} /> }}
                             />
                           </h5>
+
+                          <FormattedMessage
+                            id="app.groupsSupervisor.plantTermGroupsExplanation"
+                            defaultMessage="Organizational groups will be created for the selected term using the following names and descriptions:"
+                          />
+
+                          <Row>
+                            <Col xs={12} xl={6}>
+                              <div className="border border-success-subtle rounded-1 p-3 pb-0 my-2">
+                                <h5 className="text-muted">
+                                  <Icon icon={['far', 'flag']} gapRight />
+                                  <FormattedMessage id="app.plantTermGroupsForm.czech" defaultMessage="Czech" />
+                                </h5>
+                                <strong>{this.state.plantTexts.cs.name}</strong>
+                                <Markdown source={this.state.plantTexts.cs.description} />
+                              </div>
+                            </Col>
+                            <Col xs={12} xl={6}>
+                              <div className="border border-success-subtle rounded-1 p-3 pb-0 my-2">
+                                <h5 className="text-muted">
+                                  <Icon icon={['far', 'flag']} gapRight />
+                                  <FormattedMessage id="app.plantTermGroupsForm.english" defaultMessage="English" />
+                                </h5>
+                                <strong>{this.state.plantTexts.en.name}</strong>
+                                <Markdown source={this.state.plantTexts.en.description} />
+                              </div>
+                            </Col>
+                          </Row>
+
+                          <p>
+                            <FormattedMessage
+                              id="app.groupsSupervisor.plantTermGroupsSelectParents"
+                              defaultMessage="Please, select courses in which the term groups will be planted."
+                            />
+                          </p>
 
                           <Button variant="secondary" size="sm" onClick={this.cancelGroupPlanting}>
                             <CloseIcon gapRight />
