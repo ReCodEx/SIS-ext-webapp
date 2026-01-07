@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import ImmutablePropTypes from 'react-immutable-proptypes';
 import { FormattedMessage, injectIntl } from 'react-intl';
 
 import GroupsTreeList from './GroupsTreeList.js';
@@ -11,8 +10,18 @@ import './GroupsTreeView.css';
 /*
  * Component displaying groups in a hierarchical tree view with associated attributes.
  */
-const GroupsTreeView = ({ groups, isExpanded = false, intl: { locale }, addAttribute, removeAttribute }) => {
-  const topLevelGroups = getTopLevelGroups(groups, locale);
+const GroupsTreeView = ({
+  groups,
+  filter = null,
+  checkboxes = null,
+  checked = null,
+  setChecked = null,
+  isExpanded = false,
+  addAttribute = null,
+  removeAttribute = null,
+  intl: { locale },
+}) => {
+  const topLevelGroups = getTopLevelGroups(groups, locale, filter);
   return topLevelGroups.length === 0 ? (
     <FormattedMessage id="app.groupsTreeView.empty" defaultMessage="No groups available" />
   ) : (
@@ -23,12 +32,19 @@ const GroupsTreeView = ({ groups, isExpanded = false, intl: { locale }, addAttri
       locale={locale}
       addAttribute={addAttribute}
       removeAttribute={removeAttribute}
+      checkboxes={checkboxes}
+      checked={checked}
+      setChecked={setChecked}
     />
   );
 };
 
 GroupsTreeView.propTypes = {
-  groups: ImmutablePropTypes.map,
+  groups: PropTypes.object.isRequired, // plain object with groupId -> group mappings
+  filter: PropTypes.func,
+  checkboxes: PropTypes.func,
+  checked: PropTypes.object,
+  setChecked: PropTypes.func,
   isExpanded: PropTypes.bool,
   addAttribute: PropTypes.func,
   removeAttribute: PropTypes.func,
