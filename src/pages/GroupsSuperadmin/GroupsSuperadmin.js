@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import { Modal, Badge, Dropdown, ButtonGroup, Row, Col } from 'react-bootstrap';
 import { FormattedMessage } from 'react-intl';
 import { FORM_ERROR } from 'final-form';
+import { lruMemoize } from 'reselect';
 
 import Page from '../../components/layout/Page';
 import Box from '../../components/widgets/Box';
@@ -33,6 +34,15 @@ import { isSuperadminRole } from '../../components/helpers/usersRoles.js';
 
 const DEFAULT_EXPIRATION = 7; // days
 
+// keep only courses (term parents) and term groups
+const plantingGroupFilter = group => group.attributes?.course?.length > 0 || group.attributes?.term?.length > 0;
+
+const plantingCheckboxSelector = lruMemoize(
+  term => group =>
+    group.attributes?.course?.length > 0 &&
+    !group.children.some(g => g.attributes?.term?.includes(`${term.year}-${term.term}`))
+);
+
 class GroupsSuperadmin extends Component {
   state = {
     modalGroup: null,
@@ -41,6 +51,7 @@ class GroupsSuperadmin extends Component {
     plantTerm: null,
     modalPlant: false,
     plantTexts: null,
+    plantGroups: null,
   };
 
   openModalGroup = modalGroup =>
@@ -53,11 +64,11 @@ class GroupsSuperadmin extends Component {
       modalGroupError: null,
     });
 
-  openModalPlant = () => this.setState({ modalPlant: true, modalGroup: null });
+  openModalPlant = () => this.setState({ modalPlant: true, modalGroup: null, plantGroups: null });
 
   closeModalPlant = () => this.setState({ modalPlant: false });
 
-  cancelGroupPlanting = () => this.setState({ plantTexts: null });
+  cancelGroupPlanting = () => this.setState({ plantTexts: null, plantGroups: null });
 
   addAttributeFormSubmit = async values => {
     if (this.state.modalGroup) {
@@ -76,8 +87,15 @@ class GroupsSuperadmin extends Component {
   };
 
   plantTermGroupsFormSubmit = plantTexts => {
-    this.setState({ plantTexts });
+    this.setState({ plantTexts, plantGroups: {} });
     this.closeModalPlant();
+  };
+
+  changePlantGroups = (id, newState) => {
+    if (this.state.plantGroups && Boolean(this.state.plantGroups[id]) !== Boolean(newState)) {
+      const plantGroups = { ...this.state.plantGroups, [id]: Boolean(newState) };
+      this.setState({ plantGroups });
+    }
   };
 
   componentDidMount() {
@@ -172,9 +190,16 @@ class GroupsSuperadmin extends Component {
 
                       <GroupsTreeView
                         groups={groups}
-                        addAttribute={this.openModalGroup}
-                        removeAttribute={removeAttribute}
+                        filter={this.state.plantTexts ? plantingGroupFilter : null}
+                        checkboxes={
+                          this.state.plantTexts ? plantingCheckboxSelector(this.state.plantTerm || terms[0]) : null
+                        }
+                        checked={this.state.plantGroups}
+                        addAttribute={!this.state.plantTexts ? this.openModalGroup : null}
+                        removeAttribute={!this.state.plantTexts ? removeAttribute : null}
+                        setChecked={this.state.plantTexts ? this.changePlantGroups : null}
                       />
+
                       <hr />
 
                       <div className="text-center">

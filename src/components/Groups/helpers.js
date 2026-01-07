@@ -1,4 +1,5 @@
 import { lruMemoize } from 'reselect';
+import { objectFilter } from '../../helpers/common.js';
 
 /**
  * Retrieve course name in the given locale (with fallbacks).
@@ -92,10 +93,23 @@ const getGroups = lruMemoize((groups, locale, createChildren = false) => {
  * @param {String} locale
  * @returns {Array} list of top-level groups (augmented with localized fullName and isAdmin flag, and children list)
  */
-export const getTopLevelGroups = lruMemoize((groups, locale) =>
+export const getTopLevelGroups = lruMemoize((groups, locale, filter = null) => {
+  if (filter) {
+    // filter the groups first and make sure to keep the ancestors of matching groups
+    const filteredGroups = objectFilter(groups, filter);
+    Object.keys(filteredGroups).forEach(id => {
+      id = groups[id].parentGroupId;
+      while (id && !(id in filteredGroups)) {
+        filteredGroups[id] = groups[id];
+        id = groups[id].parentGroupId;
+      }
+    });
+    groups = filteredGroups;
+  }
+
   // 1st level groups have immediate parent, but that parent is a root (has no parent itself)
-  getGroups(groups, locale, true).filter(group => group.parent && !group.parent.parent)
-);
+  return getGroups(groups, locale, true).filter(group => group.parent && !group.parent.parent);
+});
 
 const getAttrValues = (group, key) => {
   const values = group?.attributes?.[key];
