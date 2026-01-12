@@ -9,6 +9,7 @@ export const additionalActionTypes = {
   ...createActionsWithPostfixes('BIND', 'siscodex/groups'),
   ...createActionsWithPostfixes('UNBIND', 'siscodex/groups'),
   ...createActionsWithPostfixes('CREATE', 'siscodex/groups'),
+  ...createActionsWithPostfixes('CREATE_TERM', 'siscodex/groups'),
   ...createActionsWithPostfixes('JOIN', 'siscodex/groups'),
   ...createActionsWithPostfixes('ADD_ATTRIBUTE', 'siscodex/groups'),
   ...createActionsWithPostfixes('REMOVE_ATTRIBUTE', 'siscodex/groups'),
@@ -53,6 +54,15 @@ export const createGroup = (parentId, event) =>
     endpoint: `/groups/${parentId}/create/${event.id}`,
     method: 'POST',
     meta: { parentId, eventId: event.id, eventSisId: event.sisId },
+  });
+
+export const createTermGroup = (parentId, term, texts) =>
+  createApiAction({
+    type: additionalActionTypes.CREATE_TERM,
+    endpoint: `/groups/${parentId}/create-term/${term}`,
+    method: 'POST',
+    meta: { parentId, term },
+    body: { texts },
   });
 
 export const joinGroup = groupId =>
