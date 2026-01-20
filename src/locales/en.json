@@ -1,6 +1,8 @@
 {
   "app.addAttributeForm.course": "Course",
   "app.addAttributeForm.course.explanation": "Associating course identifier enables bindings and group creations for SIS events of that course in the whole sub-tree.",
+  "app.addAttributeForm.for-term": "Plant term",
+  "app.addAttributeForm.for-term.explanation": "Helper attribute that accompanies the course identifier and marks the group suitable for planting term groups for a specific semester (i.e., in which term the course is taught).",
   "app.addAttributeForm.group": "SIS Scheduling Event",
   "app.addAttributeForm.group.explanation": "Association between groups and SIS events is usually done by binding or creating new groups from SIS events. This circumvents traditional checks, so any SIS event ID can be associated with this group. Please, handle with extreme care.",
   "app.addAttributeForm.key": "Custom Key",

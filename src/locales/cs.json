@@ -1,6 +1,8 @@
 {
   "app.addAttributeForm.course": "Předmět",
   "app.addAttributeForm.course.explanation": "Přídání atributu předmětu umožní vazby a vytváření skupin pro SIS události tohoto předmětu v celém podstromu.",
+  "app.addAttributeForm.for-term": "Osazovat termíny",
+  "app.addAttributeForm.for-term.explanation": "Pomocný atribut, který se používá v kombinaci s atributem předmětu a označuje skupinu jako vhodnou pro osazování skupin pro konkrétní semestr (tj. ve kterém semestru je předmět vyučován).",
   "app.addAttributeForm.group": "SIS Rozvrhový lístek",
   "app.addAttributeForm.group.explanation": "Navazování rozvrhových lístků se obvykle řešeí na stránce Vytváření skupin. Vytvoření zde umožnuje obejít tradiční kontroly, takže jakýkoli SIS rozvrhový lístek může být spojen s touto skupinou. Prosíme, zacházejte s tímto s extrémní opatrností.",
   "app.addAttributeForm.key": "Vlastní klíč",

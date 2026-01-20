@@ -5,11 +5,16 @@ import { FormattedMessage } from 'react-intl';
 
 import { CloseIcon, LoadingIcon, SaveIcon } from '../../icons';
 import Button, { TheButtonGroup } from '../../widgets/TheButton';
-import { TextField, StandaloneRadioField } from '../fields';
+import { TextField, SelectField, StandaloneRadioField } from '../fields';
 import Explanation from '../../widgets/Explanation';
 import { lruMemoize } from 'reselect';
 import { EMPTY_OBJ } from '../../../helpers/common';
 import Callout from '../../widgets/Callout';
+
+const termOptions = [
+  { name: <FormattedMessage id="app.terms.form.term.winter" defaultMessage="1-Winter" />, key: '1' },
+  { name: <FormattedMessage id="app.terms.form.term.summer" defaultMessage="2-Summer" />, key: '2' },
+];
 
 const empty = values => {
   const mode = values.mode === 'other' ? 'key' : values.mode;
@@ -75,6 +80,7 @@ const validate = lruMemoize(attributes => values => {
 export const INITIAL_VALUES = {
   mode: 'course',
   course: '',
+  'for-term': '1',
   term: '',
   group: '',
   key: '',
@@ -113,6 +119,32 @@ const AddAttributeForm = ({ initialValues, onSubmit, onClose, attributes = EMPTY
                                 <FormattedMessage
                                   id="app.addAttributeForm.course.explanation"
                                   defaultMessage="Associating course identifier enables bindings and group creations for SIS events of that course in the whole sub-tree."
+                                />
+                              </Explanation>
+                            </>
+                          }
+                        />
+                      </td>
+                    </tr>
+
+                    <tr className={mode === 'for-term' ? 'bg-success bg-opacity-10' : ''}>
+                      <td className="align-middle ps-3">
+                        <StandaloneRadioField name="mode" value="for-term" />
+                      </td>
+                      <td colSpan={2} className="w-100 px-3">
+                        <Field
+                          component={SelectField}
+                          name="for-term"
+                          options={termOptions}
+                          ignoreDirty
+                          disabled={mode !== 'for-term'}
+                          label={
+                            <>
+                              <FormattedMessage id="app.addAttributeForm.for-term" defaultMessage="Plant term" />
+                              <Explanation id="for-term-explanation">
+                                <FormattedMessage
+                                  id="app.addAttributeForm.for-term.explanation"
+                                  defaultMessage="Helper attribute that accompanies the course identifier and marks the group suitable for planting term groups for a specific semester (i.e., in which term the course is taught)."
                                 />
                               </Explanation>
                             </>
