@@ -88,6 +88,7 @@ export const PersonalDataIcon = props => <Icon {...props} icon="id-card" />;
 export const PipelineIcon = props => <Icon {...props} icon="random" />;
 export const PipelineStructureIcon = props => <Icon {...props} icon="sitemap" />;
 export const PlagiarismIcon = props => <Icon icon="person-circle-exclamation" {...props} />;
+export const PlantIcon = props => <Icon icon="leaf" {...props} />;
 export const PointsIcon = props => <Icon icon="comment-dollar" {...props} />;
 export const PointsDecreasedIcon = props => <Icon icon="level-down-alt" className="text-body-secondary" {...props} />;
 export const PointsGraphIcon = props => <Icon icon={['far', 'chart-bar']} {...props} />;
