@@ -7,7 +7,7 @@ import { lruMemoize } from 'reselect';
 
 import Icon, { CloseIcon } from '../../icons';
 import Button, { TheButtonGroup } from '../../widgets/TheButton';
-import { TextField } from '../fields';
+import { TextField, TextAreaField } from '../fields';
 
 const validate = values => {
   const errors = { cs: {}, en: {} };
@@ -79,7 +79,7 @@ const PlantTermGroupsForm = ({ initialValues, onSubmit, onClose }) => {
               />
 
               <Field
-                component={TextField}
+                component={TextAreaField}
                 name="cs.description"
                 ignoreDirty
                 maxLength={255}
@@ -112,7 +112,7 @@ const PlantTermGroupsForm = ({ initialValues, onSubmit, onClose }) => {
               />
 
               <Field
-                component={TextField}
+                component={TextAreaField}
                 name="en.description"
                 ignoreDirty
                 maxLength={255}
