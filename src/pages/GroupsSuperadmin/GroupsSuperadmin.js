@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import { connect } from 'react-redux';
 import { Modal, Badge, Dropdown, ButtonGroup, Row, Col } from 'react-bootstrap';
-import { FormattedMessage } from 'react-intl';
+import { FormattedMessage, injectIntl } from 'react-intl';
 import { FORM_ERROR } from 'final-form';
 import { lruMemoize } from 'reselect';
 
@@ -49,6 +49,10 @@ const plantingCheckboxSelector = lruMemoize(
     !group.children.some(g => g.attributes?.term?.includes(`${term.year}-${term.term}`))
 );
 
+const highlightClassGenerator = lruMemoize(
+  term => group => (group.attributes?.term?.includes(`${term.year}-${term.term}`) ? 'text-success fw-bold' : '')
+);
+
 class GroupsSuperadmin extends Component {
   state = {
     modalGroup: null,
@@ -61,7 +65,7 @@ class GroupsSuperadmin extends Component {
     plantGroupsCount: 0,
     plantGroupsPending: false,
     plantGroupsErrors: null,
-    plantedGroups: 5,
+    plantedGroups: 0,
   };
 
   openModalGroup = modalGroup =>
@@ -142,7 +146,11 @@ class GroupsSuperadmin extends Component {
   };
 
   plantGroups = async term => {
-    const { createTermGroup, reloadGroups } = this.props;
+    const {
+      createTermGroup,
+      reloadGroups,
+      intl: { formatMessage },
+    } = this.props;
     if (this.state.plantGroupsCount === 0) {
       return;
     }
@@ -166,7 +174,7 @@ class GroupsSuperadmin extends Component {
         await promises[id];
         ++plantedGroups;
       } catch (err) {
-        plantGroupsErrors[id] = getErrorMessage(err);
+        plantGroupsErrors[id] = getErrorMessage(formatMessage)(err);
       }
     }
 
@@ -319,6 +327,9 @@ class GroupsSuperadmin extends Component {
                         filter={this.state.plantTexts ? plantingGroupFilter : null}
                         checkboxes={
                           this.state.plantTexts ? plantingCheckboxSelector(this.state.plantTerm || terms[0]) : null
+                        }
+                        highlight={
+                          this.state.plantTexts ? highlightClassGenerator(this.state.plantTerm || terms[0]) : null
                         }
                         checked={this.state.plantGroups}
                         addAttribute={!this.state.plantTexts ? this.openModalGroup : null}
@@ -493,6 +504,7 @@ GroupsSuperadmin.propTypes = {
   removeAttribute: PropTypes.func.isRequired,
   createTermGroup: PropTypes.func.isRequired,
   reloadGroups: PropTypes.func.isRequired,
+  intl: PropTypes.object,
 };
 
 export default connect(
@@ -513,4 +525,4 @@ export default connect(
     createTermGroup: (parentId, term, texts) => dispatch(createTermGroup(parentId, term, texts)),
     reloadGroups: () => dispatch(fetchAllGroups()),
   })
-)(GroupsSuperadmin);
+)(injectIntl(GroupsSuperadmin));
