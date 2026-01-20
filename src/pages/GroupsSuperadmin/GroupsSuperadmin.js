@@ -15,7 +15,7 @@ import AddAttributeForm, { INITIAL_VALUES as ADD_FORM_INITIAL_VALUES } from '../
 import PlantTermGroupsForm, {
   initialValuesCreator as plantFormInitialValuesCreator,
 } from '../../components/forms/PlantTermGroupsForm';
-import Icon, { CloseIcon, GroupIcon, LoadingIcon, ManagementIcon } from '../../components/icons';
+import Icon, { CloseIcon, GroupIcon, LoadingIcon, ManagementIcon, PlantIcon } from '../../components/icons';
 import ResourceRenderer from '../../components/helpers/ResourceRenderer';
 import Button, { TheButtonGroup } from '../../components/widgets/TheButton';
 import Callout from '../../components/widgets/Callout';
@@ -291,7 +291,7 @@ class GroupsSuperadmin extends Component {
                               size="sm"
                               onClick={() => this.plantGroups(this.state.plantTerm || terms[0])}
                               disabled={this.state.plantGroupsCount === 0 || this.state.plantGroupsPending}>
-                              {this.state.plantGroupsPending ? <LoadingIcon gapRight /> : <Icon icon="leaf" gapRight />}
+                              {this.state.plantGroupsPending ? <LoadingIcon gapRight /> : <PlantIcon gapRight />}
                               <FormattedMessage
                                 id="app.groupsSupervisor.plantTermGroupsConfirmButton"
                                 defaultMessage="Plant Term Groups"
@@ -356,7 +356,7 @@ class GroupsSuperadmin extends Component {
                             <Button
                               variant="success"
                               onClick={() => this.openModalPlant(groups, this.state.plantTerm || terms[0])}>
-                              <Icon icon="leaf" gapRight />
+                              <PlantIcon gapRight />
                               <FormattedMessage
                                 id="app.groupsSupervisor.plantTermButton"
                                 defaultMessage="Plant groups for"
@@ -380,7 +380,7 @@ class GroupsSuperadmin extends Component {
                               variant={this.state.plantGroupsErrors ? 'danger' : 'success'}
                               onClick={() => this.plantGroups(this.state.plantTerm || terms[0])}
                               disabled={this.state.plantGroupsCount === 0 || this.state.plantGroupsPending}>
-                              {this.state.plantGroupsPending ? <LoadingIcon gapRight /> : <Icon icon="leaf" gapRight />}
+                              {this.state.plantGroupsPending ? <LoadingIcon gapRight /> : <PlantIcon gapRight />}
                               <FormattedMessage
                                 id="app.groupsSupervisor.plantTermGroupsConfirmButton"
                                 defaultMessage="Plant Term Groups"

@@ -8,7 +8,16 @@ import Button from '../../widgets/TheButton';
 import Confirm from '../../widgets/Confirm';
 import GroupsTreeList from './GroupsTreeList.js';
 import GroupMembershipIcon from '../GroupMembershipIcon';
-import Icon, { AddIcon, CloseIcon, GroupIcon, LectureIcon, LoadingIcon, TermIcon, WarningIcon } from '../../icons';
+import Icon, {
+  AddIcon,
+  CloseIcon,
+  GroupIcon,
+  LectureIcon,
+  LoadingIcon,
+  PlantIcon,
+  TermIcon,
+  WarningIcon,
+} from '../../icons';
 import { EMPTY_OBJ } from '../../../helpers/common.js';
 
 const DEFAULT_ICON = ['far', 'square'];
@@ -34,14 +43,27 @@ const getLocalizedName = (name, id, locale) => {
 
 const KNOWN_ATTR_KEYS = {
   course: 'primary',
+  'for-term': 'success',
   term: 'info',
   group: 'warning',
 };
 
 const ATTR_ICONS = {
   course: <LectureIcon gapRight />,
+  'for-term': <PlantIcon gapRight />,
   term: <TermIcon gapRight />,
   group: <GroupIcon gapRight />,
+};
+
+const ATTR_TRANSFORM = {
+  'for-term': value =>
+    value === '1' ? (
+      <FormattedMessage id="app.terms.winter" defaultMessage="Winter" />
+    ) : value === '2' ? (
+      <FormattedMessage id="app.terms.summer" defaultMessage="Summer" />
+    ) : (
+      value
+    ),
 };
 
 const GroupsTreeNode = React.memo(
@@ -195,7 +217,7 @@ const GroupsTreeNode = React.memo(
                     className={'ms-1' + (pending ? ' opacity-25' : '')}>
                     {ATTR_ICONS[key]}
                     {!KNOWN_ATTR_KEYS[key] && `${key}: `}
-                    {value}
+                    {ATTR_TRANSFORM[key] ? ATTR_TRANSFORM[key](value) : value}
 
                     {removeAttribute && !pending && (
                       <Confirm
