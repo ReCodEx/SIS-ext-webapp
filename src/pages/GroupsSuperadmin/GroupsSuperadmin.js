@@ -37,21 +37,32 @@ import { loggedInUserSelector } from '../../redux/selectors/users.js';
 
 import { isSuperadminRole } from '../../components/helpers/usersRoles.js';
 import { getErrorMessage } from '../../locales/apiErrorMessages.js';
+import { getGroups as getGroupsHelper } from '../../components/Groups/helpers.js';
 
 const DEFAULT_EXPIRATION = 7; // days
 
 // keep only courses (term parents) and term groups
 const plantingGroupFilter = group => group.attributes?.course?.length > 0 || group.attributes?.term?.length > 0;
 
-const plantingCheckboxSelector = lruMemoize(
-  term => group =>
-    group.attributes?.course?.length > 0 &&
-    !group.children.some(g => g.attributes?.term?.includes(`${term.year}-${term.term}`))
-);
+const groupCheckboxPredicate = (group, term) =>
+  group.attributes?.course?.length > 0 &&
+  !group.children.some(g => g.attributes?.term?.includes(`${term.year}-${term.term}`));
+
+const plantingCheckboxSelector = lruMemoize(term => group => groupCheckboxPredicate(group, term));
 
 const highlightClassGenerator = lruMemoize(
   term => group => (group.attributes?.term?.includes(`${term.year}-${term.term}`) ? 'text-success fw-bold' : '')
 );
+
+const getPlantingCandidates = (groups, term) => {
+  const candidates = {};
+  getGroupsHelper(groups, 'en', true)
+    .filter(g => groupCheckboxPredicate(g, term) && g.attributes?.['for-term']?.includes(`${term.term}`))
+    .forEach(g => {
+      candidates[g.id] = true;
+    });
+  return candidates;
+};
 
 class GroupsSuperadmin extends Component {
   state = {
@@ -78,19 +89,21 @@ class GroupsSuperadmin extends Component {
       modalGroupError: null,
     });
 
-  openModalPlant = () =>
+  openModalPlant = (groups, term) => {
+    const plantGroups = getPlantingCandidates(groups, term);
     this.setState({
       modalPlant: true,
       modalGroup: null,
-      plantGroups: null,
+      plantGroups,
       plantTexts: null,
-      plantGroupsCount: 0,
+      plantGroupsCount: Object.keys(plantGroups).length,
       plantGroupsPending: false,
       plantGroupsErrors: null,
       plantedGroups: 0,
     });
+  };
 
-  closeModalPlant = () => this.setState({ modalPlant: false });
+  closeModalPlant = () => this.setState({ modalPlant: false, plantGroups: null, plantGroupsCount: 0 });
 
   cancelGroupPlanting = () => {
     if (!this.state.plantGroupsPending) {
@@ -124,13 +137,11 @@ class GroupsSuperadmin extends Component {
   plantTermGroupsFormSubmit = plantTexts => {
     this.setState({
       plantTexts,
-      plantGroups: {},
-      plantGroupsCount: 0,
       plantGroupsPending: false,
       plantGroupsErrors: null,
       plantedGroups: 0,
+      modalPlant: false,
     });
-    this.closeModalPlant();
   };
 
   changePlantGroups = (id, newState) => {
@@ -342,7 +353,9 @@ class GroupsSuperadmin extends Component {
                       <div className="text-center">
                         {terms && terms.length > 0 && !this.state.plantTexts && (
                           <Dropdown as={ButtonGroup}>
-                            <Button variant="success" onClick={this.openModalPlant}>
+                            <Button
+                              variant="success"
+                              onClick={() => this.openModalPlant(groups, this.state.plantTerm || terms[0])}>
                               <Icon icon="leaf" gapRight />
                               <FormattedMessage
                                 id="app.groupsSupervisor.plantTermButton"

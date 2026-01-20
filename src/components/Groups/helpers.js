@@ -57,7 +57,7 @@ const augmentGroupObject = (groups, id, locale) => {
  * @param {Boolean} createChildren whether to create children list in each group
  * @returns {Array} sorted array of augmented group objects
  */
-const getGroups = lruMemoize((groups, locale, createChildren = false) => {
+export const getGroups = lruMemoize((groups, locale, createChildren = false) => {
   // make a copy of groups so we can augment it
   const result = {};
   Object.keys(groups).forEach(id => {
