@@ -14,11 +14,13 @@ const GroupsTreeView = ({
   groups,
   filter = null,
   checkboxes = null,
+  highlight = null,
   checked = null,
   setChecked = null,
   isExpanded = false,
   addAttribute = null,
   removeAttribute = null,
+  errors = null,
   intl: { locale },
 }) => {
   const topLevelGroups = getTopLevelGroups(groups, locale, filter);
@@ -33,8 +35,10 @@ const GroupsTreeView = ({
       addAttribute={addAttribute}
       removeAttribute={removeAttribute}
       checkboxes={checkboxes}
+      highlight={highlight}
       checked={checked}
       setChecked={setChecked}
+      errors={errors}
     />
   );
 };
@@ -43,7 +47,9 @@ GroupsTreeView.propTypes = {
   groups: PropTypes.object.isRequired, // plain object with groupId -> group mappings
   filter: PropTypes.func,
   checkboxes: PropTypes.func,
+  highlight: PropTypes.func,
   checked: PropTypes.object,
+  errors: PropTypes.object,
   setChecked: PropTypes.func,
   isExpanded: PropTypes.bool,
   addAttribute: PropTypes.func,

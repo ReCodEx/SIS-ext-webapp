@@ -8,7 +8,7 @@ import Button from '../../widgets/TheButton';
 import Confirm from '../../widgets/Confirm';
 import GroupsTreeList from './GroupsTreeList.js';
 import GroupMembershipIcon from '../GroupMembershipIcon';
-import Icon, { AddIcon, CloseIcon, GroupIcon, LectureIcon, LoadingIcon, TermIcon } from '../../icons';
+import Icon, { AddIcon, CloseIcon, GroupIcon, LectureIcon, LoadingIcon, TermIcon, WarningIcon } from '../../icons';
 import { EMPTY_OBJ } from '../../../helpers/common.js';
 
 const DEFAULT_ICON = ['far', 'square'];
@@ -48,7 +48,9 @@ const GroupsTreeNode = React.memo(
   ({
     group,
     checkboxes = null,
+    highlight = null,
     checked = null,
+    errors = null,
     setChecked = null,
     isExpanded = false,
     addAttribute,
@@ -73,29 +75,38 @@ const GroupsTreeNode = React.memo(
     const hasCheckbox = checkboxes ? checkboxes(group) : false;
     const isChecked = checked ? Boolean(checked[id]) : false;
     const clickHandler = hasCheckbox ? () => setChecked(id, !isChecked) : () => setOpen(!isOpen);
+    const error = (errors && errors[id]) || null;
+    const highlightClass = highlight ? highlight(group) : '';
+    const highlightIconClass = highlight ? highlight(group) : 'text-body-tertiary';
 
     return (
       <li>
         <span onClick={clickHandler} className="clearfix">
-          {hasCheckbox ? (
-            <Icon
-              icon={isChecked ? 'square-check' : DEFAULT_ICON}
-              className="text-success clickable"
-              gapRight={2}
-              fixedWidth
-            />
-          ) : checkboxes ? (
-            <Icon icon="square" className="text-body-secondary opacity-25" gapRight={2} fixedWidth />
-          ) : (
-            <Icon
-              icon={leafNode ? DEFAULT_ICON : isOpen ? 'minus-square' : 'plus-square'}
-              className="text-body-secondary clickable"
-              gapRight={2}
-              fixedWidth
-            />
-          )}
+          <span className={error ? 'text-danger fw-bold' : highlightClass}>
+            {hasCheckbox ? (
+              <Icon
+                icon={isChecked ? 'square-check' : DEFAULT_ICON}
+                className="text-success clickable"
+                gapRight={2}
+                fixedWidth
+              />
+            ) : checkboxes ? (
+              <Icon icon="square" className={`opacity-50 ${highlightIconClass}`} gapRight={2} fixedWidth />
+            ) : (
+              <Icon
+                icon={leafNode ? DEFAULT_ICON : isOpen ? 'minus-square' : 'plus-square'}
+                className={`clickable ${highlightIconClass}`}
+                gapRight={2}
+                fixedWidth
+              />
+            )}
 
-          {getLocalizedName(name, id, locale)}
+            {error && (
+              <WarningIcon gapRight className="text-danger" tooltip={error} tooltipId={`error-tooltip-${id}`} />
+            )}
+
+            {getLocalizedName(name, id, locale)}
+          </span>
 
           {admins && admins.length > 0 && (
             <span className="ps-2">
@@ -216,8 +227,10 @@ const GroupsTreeNode = React.memo(
               removeAttribute={removeAttribute}
               locale={locale}
               checkboxes={checkboxes}
+              highlight={highlight}
               checked={checked}
               setChecked={setChecked}
+              errors={errors}
             />
           </Collapse>
         )}
@@ -239,7 +252,9 @@ GroupsTreeNode.propTypes = {
     pending: PropTypes.bool,
   }),
   checkboxes: PropTypes.func,
+  highlight: PropTypes.func,
   checked: PropTypes.object,
+  errors: PropTypes.object,
   setChecked: PropTypes.func,
   isExpanded: PropTypes.bool,
   addAttribute: PropTypes.func,
