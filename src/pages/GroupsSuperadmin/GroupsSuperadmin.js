@@ -33,6 +33,7 @@ import {
   addGroupAttribute,
   removeGroupAttribute,
   createTermGroup,
+  setGroupArchived,
 } from '../../redux/modules/groups.js';
 import { fetchAllTerms } from '../../redux/modules/terms.js';
 import { fetchUserIfNeeded } from '../../redux/modules/users.js';
@@ -104,14 +105,16 @@ class GroupsSuperadmin extends Component {
     operationPending: false, // an async operation (adding attribute, planting groups, archiving groups) is pending
     selectedGroups: null, // groups with checkboxes (if  checkboxes are shown)
     selectedGroupsCount: 0, // number of selected groups (for easy access without iterating over selectedGroups)
-    modalGroup: null,
-    modalGroupError: null,
-    modalPlant: false,
-    plantTerm: null,
-    plantTexts: null,
-    plantGroupsErrors: null,
-    plantedGroups: 0,
-    archiving: false,
+    modalGroup: null, // group for which the "add attribute" modal is open (also controls whether the modal is open)
+    modalGroupError: null, // error message to be displayed in the "add attribute" modal if the operation fails
+    modalPlant: false, // whether the "plant term groups" modal is open
+    plantTerm: null, // term selected for planting, if null, the first term in the list is used
+    plantTexts: null, // texts for the groups to be planted (not null indicates that stage 2 of planting is active)
+    plantGroupsErrors: null, // object groupId -> error message for groups that failed to be planted (only relevant in stage 2 of planting)
+    plantedGroups: 0, // number of groups successfully planted in the last planting operation
+    archiving: false, // whether the page is in "archiving mode" (selecting groups for archiving)
+    archivedGroups: 0, // number of groups successfully archived in the last archiving operation
+    archivedErrors: 0, // number of groups that failed to be archived in the last archiving operation
   };
 
   pageInDefaultMode = () =>
@@ -135,7 +138,15 @@ class GroupsSuperadmin extends Component {
 
   openModalGroup = modalGroup => {
     if (this.pageInDefaultMode() && !this.state.operationPending) {
-      this.setState({ modalGroup, operationPending: false, modalGroupError: null, modalPlant: false });
+      this.setState({
+        modalGroup,
+        operationPending: false,
+        modalGroupError: null,
+        modalPlant: false,
+        plantedGroups: 0,
+        archivedGroups: 0,
+        archivedErrors: 0,
+      });
     }
   };
 
@@ -181,6 +192,8 @@ class GroupsSuperadmin extends Component {
       operationPending: false,
       plantGroupsErrors: null,
       plantedGroups: 0,
+      archivedGroups: 0,
+      archivedErrors: 0,
     });
   };
 
@@ -269,18 +282,42 @@ class GroupsSuperadmin extends Component {
         selectedGroupsCount: Object.keys(selectedGroups).length,
         plantGroupsErrors: null,
         plantedGroups: 0,
+        archivedGroups: 0,
+        archivedErrors: 0,
       });
     }
   };
 
   archiveSelectedGroups = async () => {
+    const { setGroupArchived, reloadGroups } = this.props;
+
     if (this.state.selectedGroupsCount === 0 || this.state.operationPending) {
       return;
     }
 
-    // TODO change the groups state in ReCodEx
+    const promises = {};
+    Object.keys(this.state.selectedGroups)
+      .filter(id => this.state.selectedGroups[id])
+      .forEach(id => {
+        promises[id] = setGroupArchived(id, true);
+      });
+
+    // wait for all promises and handle errors
+    let archivedGroups = 0;
+    let archivedErrors = 0;
+    for (const id of Object.keys(promises)) {
+      try {
+        await promises[id];
+        ++archivedGroups;
+      } catch (err) {
+        ++archivedErrors;
+      }
+    }
+
+    await reloadGroups();
 
     this.cancelArchiving();
+    this.setState({ archivedGroups, archivedErrors });
   };
 
   cancelArchiving = () => this.setState({ archiving: false, selectedGroups: null, selectedGroupsCount: 0 });
@@ -457,6 +494,49 @@ class GroupsSuperadmin extends Component {
                             id="app.groupsSupervisor.plantingFailed"
                             defaultMessage="Planting has failed. Some of the groups could not be created. Their parent groups are marked below."
                           />
+                        </Callout>
+                      )}
+
+                      {this.state.archivedGroups + this.state.archivedErrors > 0 && (
+                        <Callout
+                          variant={
+                            this.state.archivedErrors === 0
+                              ? 'success'
+                              : this.state.archivedGroups === 0
+                                ? 'danger'
+                                : 'warning'
+                          }>
+                          <CloseIcon
+                            onClick={() => this.setState({ archivedGroups: 0, archivedErrors: 0 })}
+                            className="float-end clickable pt-1"
+                          />
+
+                          {this.state.archivedErrors === 0 ? (
+                            <FormattedMessage
+                              id="app.groupsSupervisor.archivingResultSuccess"
+                              defaultMessage="Total {archivedGroups} {archivedGroups, plural, one {group} other {groups}} were successfully archived."
+                              values={{
+                                archivedGroups: this.state.archivedGroups,
+                              }}
+                            />
+                          ) : this.state.archivedGroups === 0 ? (
+                            <FormattedMessage
+                              id="app.groupsSupervisor.archivingResultFailure"
+                              defaultMessage="Selected {archivedErrors} {archivedErrors, plural, one {group} other {groups}} failed to be archived. Please, try the operation again or try archiving the groups individually in ReCodEx."
+                              values={{
+                                archivedErrors: this.state.archivedErrors,
+                              }}
+                            />
+                          ) : (
+                            <FormattedMessage
+                              id="app.groupsSupervisor.archivingResult"
+                              defaultMessage="Total {archivedGroups} {archivedGroups, plural, one {group} other {groups}} were successfully archived, but {archivedErrors} {archivedErrors, plural, one {group} other {groups}} failed. Please, try the operation again or try archiving the groups individually in ReCodEx."
+                              values={{
+                                archivedGroups: this.state.archivedGroups,
+                                archivedErrors: this.state.archivedErrors,
+                              }}
+                            />
+                          )}
                         </Callout>
                       )}
 
@@ -694,6 +774,7 @@ GroupsSuperadmin.propTypes = {
   removeAttribute: PropTypes.func.isRequired,
   createTermGroup: PropTypes.func.isRequired,
   reloadGroups: PropTypes.func.isRequired,
+  setGroupArchived: PropTypes.func.isRequired,
   intl: PropTypes.object,
 };
 
@@ -714,5 +795,6 @@ export default connect(
       ),
     createTermGroup: (parentId, term, texts) => dispatch(createTermGroup(parentId, term, texts)),
     reloadGroups: () => dispatch(fetchAllGroups()),
+    setGroupArchived: (groupId, value) => dispatch(setGroupArchived(groupId, value)),
   })
 )(injectIntl(GroupsSuperadmin));

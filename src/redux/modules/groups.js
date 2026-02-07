@@ -13,6 +13,7 @@ export const additionalActionTypes = {
   ...createActionsWithPostfixes('JOIN', 'siscodex/groups'),
   ...createActionsWithPostfixes('ADD_ATTRIBUTE', 'siscodex/groups'),
   ...createActionsWithPostfixes('REMOVE_ATTRIBUTE', 'siscodex/groups'),
+  ...createActionsWithPostfixes('SET_ARCHIVED', 'siscodex/groups'),
 };
 
 /**
@@ -89,6 +90,15 @@ export const removeGroupAttribute = (groupId, key, value) =>
     method: 'POST',
     meta: { groupId, key, value },
     body: { key, value },
+  });
+
+export const setGroupArchived = (groupId, value) =>
+  createApiAction({
+    type: additionalActionTypes.SET_ARCHIVED,
+    endpoint: `/groups/${groupId}/archived`,
+    method: 'POST',
+    meta: { groupId, value },
+    body: { value },
   });
 
 /**
