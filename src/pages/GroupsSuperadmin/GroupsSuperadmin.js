@@ -15,7 +15,14 @@ import AddAttributeForm, { INITIAL_VALUES as ADD_FORM_INITIAL_VALUES } from '../
 import PlantTermGroupsForm, {
   initialValuesCreator as plantFormInitialValuesCreator,
 } from '../../components/forms/PlantTermGroupsForm';
-import Icon, { CloseIcon, GroupIcon, LoadingIcon, ManagementIcon, PlantIcon } from '../../components/icons';
+import Icon, {
+  ArchiveIcon,
+  CloseIcon,
+  GroupIcon,
+  LoadingIcon,
+  ManagementIcon,
+  PlantIcon,
+} from '../../components/icons';
 import ResourceRenderer from '../../components/helpers/ResourceRenderer';
 import Button, { TheButtonGroup } from '../../components/widgets/TheButton';
 import Callout from '../../components/widgets/Callout';
@@ -39,16 +46,18 @@ import { isSuperadminRole } from '../../components/helpers/usersRoles.js';
 import { getErrorMessage } from '../../locales/apiErrorMessages.js';
 import { getGroups as getGroupsHelper } from '../../components/Groups/helpers.js';
 
+import { isEmptyObject } from '../../helpers/common.js';
+
 const DEFAULT_EXPIRATION = 7; // days
 
 // keep only courses (term parents) and term groups
 const plantingGroupFilter = group => group.attributes?.course?.length > 0 || group.attributes?.term?.length > 0;
 
-const groupCheckboxPredicate = (group, term) =>
+const plantingCheckboxPredicate = (group, term) =>
   group.attributes?.course?.length > 0 &&
   !group.children.some(g => g.attributes?.term?.includes(`${term.year}-${term.term}`));
 
-const plantingCheckboxSelector = lruMemoize(term => group => groupCheckboxPredicate(group, term));
+const plantingCheckboxSelector = lruMemoize(term => group => plantingCheckboxPredicate(group, term));
 
 const highlightClassGenerator = lruMemoize(
   term => group => (group.attributes?.term?.includes(`${term.year}-${term.term}`) ? 'text-success fw-bold' : '')
@@ -57,66 +66,85 @@ const highlightClassGenerator = lruMemoize(
 const getPlantingCandidates = (groups, term) => {
   const candidates = {};
   getGroupsHelper(groups, 'en', true)
-    .filter(g => groupCheckboxPredicate(g, term) && g.attributes?.['for-term']?.includes(`${term.term}`))
+    .filter(g => plantingCheckboxPredicate(g, term) && g.attributes?.['for-term']?.includes(`${term.term}`))
     .forEach(g => {
       candidates[g.id] = true;
     });
   return candidates;
 };
 
+const getGroupsForArchiving = lruMemoize((groups, terms) => {
+  const nowTs = Date.now() / 1000;
+  const archivedTerms = {};
+  terms.filter(t => t.archiveAfter && t.archiveAfter <= nowTs).forEach(t => (archivedTerms[`${t.year}-${t.term}`] = t));
+
+  const groupsForArchiving = {};
+  Object.values(groups)
+    .filter(g => g.attributes?.term && g.attributes?.term.some(t => archivedTerms[t]))
+    .forEach(g => {
+      groupsForArchiving[g.id] = true;
+    });
+
+  return groupsForArchiving;
+});
+
+const archivingGroupFilter = group => group.attributes?.term?.length > 0;
+
+const archivingCheckboxSelector = lruMemoize(groups => group => group.id in groups);
+
 class GroupsSuperadmin extends Component {
+  /*
+   * There are several modes the page can be operating in, which are controlled by the state properties:
+   * - Adding new attribute to a group (modalGroup is set)
+   * - Planting term groups stage 1 -- updating planted group texts in a modal.
+   * - Planting term groups stage 2 -- selecting parent groups before confirming planting
+   * - Archiving old term groups -- selecting groups to be archived
+   */
   state = {
+    operationPending: false, // an async operation (adding attribute, planting groups, archiving groups) is pending
+    selectedGroups: null, // groups with checkboxes (if  checkboxes are shown)
+    selectedGroupsCount: 0, // number of selected groups (for easy access without iterating over selectedGroups)
     modalGroup: null,
-    modalGroupPending: false,
     modalGroupError: null,
-    plantTerm: null,
     modalPlant: false,
+    plantTerm: null,
     plantTexts: null,
-    plantGroups: null,
-    plantGroupsCount: 0,
-    plantGroupsPending: false,
     plantGroupsErrors: null,
     plantedGroups: 0,
+    archiving: false,
   };
 
-  openModalGroup = modalGroup =>
-    this.setState({ modalGroup, modalGroupPending: false, modalGroupError: null, modalPlant: false });
+  pageInDefaultMode = () =>
+    !this.state.modalGroup && !this.state.plantTexts && !this.state.modalPlant && !this.state.archiving;
+
+  changeSelectedGroups = (id, newState) => {
+    if (
+      this.state.selectedGroups &&
+      !this.state.operationPending &&
+      Boolean(this.state.selectedGroups[id]) !== Boolean(newState)
+    ) {
+      const selectedGroups = { ...this.state.selectedGroups, [id]: Boolean(newState) };
+      const selectedGroupsCount = Object.values(selectedGroups).filter(v => v).length;
+      this.setState({ selectedGroups, selectedGroupsCount });
+    }
+  };
+
+  /*
+   * Adding new attribute to a group
+   */
+
+  openModalGroup = modalGroup => {
+    if (this.pageInDefaultMode() && !this.state.operationPending) {
+      this.setState({ modalGroup, operationPending: false, modalGroupError: null, modalPlant: false });
+    }
+  };
 
   closeModalGroup = () =>
     this.setState({
       modalGroup: null,
-      modalGroupPending: false,
+      operationPending: false,
       modalGroupError: null,
     });
-
-  openModalPlant = (groups, term) => {
-    const plantGroups = getPlantingCandidates(groups, term);
-    this.setState({
-      modalPlant: true,
-      modalGroup: null,
-      plantGroups,
-      plantTexts: null,
-      plantGroupsCount: Object.keys(plantGroups).length,
-      plantGroupsPending: false,
-      plantGroupsErrors: null,
-      plantedGroups: 0,
-    });
-  };
-
-  closeModalPlant = () => this.setState({ modalPlant: false, plantGroups: null, plantGroupsCount: 0 });
-
-  cancelGroupPlanting = () => {
-    if (!this.state.plantGroupsPending) {
-      this.setState({
-        plantTexts: null,
-        plantGroups: null,
-        plantGroupsCount: 0,
-        plantGroupsPending: false,
-        plantGroupsErrors: null,
-        plantedGroups: 0,
-      });
-    }
-  };
 
   addAttributeFormSubmit = async values => {
     if (this.state.modalGroup) {
@@ -134,26 +162,51 @@ class GroupsSuperadmin extends Component {
     }
   };
 
+  /*
+   * Planting term groups
+   */
+
+  openModalPlant = (groups, term) => {
+    if (!this.pageInDefaultMode() || this.state.operationPending) {
+      return;
+    }
+
+    const selectedGroups = getPlantingCandidates(groups, term);
+    this.setState({
+      modalPlant: true,
+      modalGroup: null,
+      selectedGroups,
+      plantTexts: null,
+      selectedGroupsCount: Object.keys(selectedGroups).length,
+      operationPending: false,
+      plantGroupsErrors: null,
+      plantedGroups: 0,
+    });
+  };
+
+  closeModalPlant = () => this.setState({ modalPlant: false, selectedGroups: null, selectedGroupsCount: 0 });
+
+  cancelGroupPlanting = () => {
+    if (!this.state.operationPending) {
+      this.setState({
+        plantTexts: null,
+        selectedGroups: null,
+        selectedGroupsCount: 0,
+        operationPending: false,
+        plantGroupsErrors: null,
+        plantedGroups: 0,
+      });
+    }
+  };
+
   plantTermGroupsFormSubmit = plantTexts => {
     this.setState({
       plantTexts,
-      plantGroupsPending: false,
+      operationPending: false,
       plantGroupsErrors: null,
       plantedGroups: 0,
       modalPlant: false,
     });
-  };
-
-  changePlantGroups = (id, newState) => {
-    if (
-      this.state.plantGroups &&
-      !this.state.plantGroupsPending &&
-      Boolean(this.state.plantGroups[id]) !== Boolean(newState)
-    ) {
-      const plantGroups = { ...this.state.plantGroups, [id]: Boolean(newState) };
-      const plantGroupsCount = Object.values(plantGroups).filter(v => v).length;
-      this.setState({ plantGroups, plantGroupsCount });
-    }
   };
 
   plantGroups = async term => {
@@ -162,17 +215,18 @@ class GroupsSuperadmin extends Component {
       reloadGroups,
       intl: { formatMessage },
     } = this.props;
-    if (this.state.plantGroupsCount === 0) {
+
+    if (this.state.selectedGroupsCount === 0 || this.state.operationPending) {
       return;
     }
 
-    this.setState({ plantGroupsPending: true, plantGroupsErrors: null, plantedGroups: 0 });
+    this.setState({ operationPending: true, plantGroupsErrors: null, plantedGroups: 0 });
 
     // start creating the groups
     const termId = `${term.year}-${term.term}`;
     const promises = {};
-    Object.keys(this.state.plantGroups)
-      .filter(id => this.state.plantGroups[id])
+    Object.keys(this.state.selectedGroups)
+      .filter(id => this.state.selectedGroups[id])
       .forEach(id => {
         promises[id] = createTermGroup(id, termId, this.state.plantTexts);
       });
@@ -193,14 +247,47 @@ class GroupsSuperadmin extends Component {
 
     if (Object.keys(plantGroupsErrors).length > 0) {
       // still planting, but also show errors
-      this.setState({ plantGroupsErrors, plantGroups: {} });
+      this.setState({ plantGroupsErrors, selectedGroups: {} });
     } else {
       // terminate planing
-      this.setState({ plantTexts: null, plantGroups: null });
+      this.setState({ plantTexts: null, selectedGroups: null });
     }
 
-    this.setState({ plantGroupsPending: false, plantGroupsCount: 0, plantedGroups });
+    this.setState({ operationPending: false, selectedGroupsCount: 0, plantedGroups });
   };
+
+  /*
+   * Archiving
+   */
+
+  startArchiving = (groups, terms) => {
+    if (this.pageInDefaultMode() && !this.state.operationPending) {
+      const selectedGroups = getGroupsForArchiving(groups, terms);
+      this.setState({
+        archiving: true,
+        selectedGroups,
+        selectedGroupsCount: Object.keys(selectedGroups).length,
+        plantGroupsErrors: null,
+        plantedGroups: 0,
+      });
+    }
+  };
+
+  archiveSelectedGroups = async () => {
+    if (this.state.selectedGroupsCount === 0 || this.state.operationPending) {
+      return;
+    }
+
+    // TODO change the groups state in ReCodEx
+
+    this.cancelArchiving();
+  };
+
+  cancelArchiving = () => this.setState({ archiving: false, selectedGroups: null, selectedGroupsCount: 0 });
+
+  /*
+   * Lifecycle management and data loading
+   */
 
   componentDidMount() {
     this.props.loadAsync(this.props.loggedInUserId);
@@ -290,8 +377,8 @@ class GroupsSuperadmin extends Component {
                               variant={this.state.plantGroupsErrors ? 'danger' : 'success'}
                               size="sm"
                               onClick={() => this.plantGroups(this.state.plantTerm || terms[0])}
-                              disabled={this.state.plantGroupsCount === 0 || this.state.plantGroupsPending}>
-                              {this.state.plantGroupsPending ? <LoadingIcon gapRight /> : <PlantIcon gapRight />}
+                              disabled={this.state.selectedGroupsCount === 0 || this.state.operationPending}>
+                              {this.state.operationPending ? <LoadingIcon gapRight /> : <PlantIcon gapRight />}
                               <FormattedMessage
                                 id="app.groupsSupervisor.plantTermGroupsConfirmButton"
                                 defaultMessage="Plant Term Groups"
@@ -300,10 +387,51 @@ class GroupsSuperadmin extends Component {
                             <Button
                               variant="secondary"
                               size="sm"
-                              disabled={this.state.plantGroupsPending}
+                              disabled={this.state.operationPending}
                               onClick={this.cancelGroupPlanting}>
                               <CloseIcon gapRight />
                               <FormattedMessage id="generic.cancel" defaultMessage="Cancel" />
+                            </Button>
+                          </TheButtonGroup>
+                        </Callout>
+                      )}
+
+                      {this.state.archiving && (
+                        <Callout variant="success" icon={<ArchiveIcon />}>
+                          <h5>
+                            <FormattedMessage
+                              id="app.groupsSupervisor.archivingGroupsHeading"
+                              defaultMessage="Archiving Old Term Groups"
+                            />
+                          </h5>
+
+                          <p>
+                            <FormattedMessage
+                              id="app.groupsSupervisor.archivingGroupsInfo"
+                              defaultMessage="Selected term groups will be archived (with all their sub-groups). This operation may be reverted in ReCodEx by individually excavating the groups from the archive."
+                            />
+                          </p>
+
+                          <TheButtonGroup>
+                            <Button
+                              variant="danger"
+                              onClick={this.archiveSelectedGroups}
+                              disabled={this.state.selectedGroupsCount === 0 || this.state.operationPending}>
+                              {this.state.operationPending ? <LoadingIcon gapRight /> : <ArchiveIcon gapRight />}
+                              <FormattedMessage
+                                id="app.groupsSupervisor.archiveButton"
+                                defaultMessage="Archive Selected Groups"
+                              />
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              onClick={this.cancelArchiving}
+                              disabled={this.state.operationPending}>
+                              <CloseIcon gapRight />
+                              <FormattedMessage
+                                id="app.groupsSupervisor.cancelArchivingButton"
+                                defaultMessage="Cancel Archiving"
+                              />
                             </Button>
                           </TheButtonGroup>
                         </Callout>
@@ -335,69 +463,118 @@ class GroupsSuperadmin extends Component {
                       <GroupsTreeView
                         groups={groups}
                         errors={this.state.plantTexts ? this.state.plantGroupsErrors : null}
-                        filter={this.state.plantTexts ? plantingGroupFilter : null}
+                        filter={
+                          this.state.plantTexts
+                            ? plantingGroupFilter
+                            : this.state.archiving
+                              ? archivingGroupFilter
+                              : null
+                        }
                         checkboxes={
-                          this.state.plantTexts ? plantingCheckboxSelector(this.state.plantTerm || terms[0]) : null
+                          this.state.plantTexts
+                            ? plantingCheckboxSelector(this.state.plantTerm || terms[0])
+                            : this.state.archiving
+                              ? archivingCheckboxSelector(getGroupsForArchiving(groups, terms))
+                              : null
                         }
                         highlight={
                           this.state.plantTexts ? highlightClassGenerator(this.state.plantTerm || terms[0]) : null
                         }
-                        checked={this.state.plantGroups}
-                        addAttribute={!this.state.plantTexts ? this.openModalGroup : null}
-                        removeAttribute={!this.state.plantTexts ? removeAttribute : null}
-                        setChecked={this.state.plantTexts ? this.changePlantGroups : null}
+                        checked={this.state.selectedGroups}
+                        addAttribute={this.pageInDefaultMode() ? this.openModalGroup : null}
+                        removeAttribute={this.pageInDefaultMode() ? removeAttribute : null}
+                        setChecked={this.state.plantTexts || this.state.archiving ? this.changeSelectedGroups : null}
                       />
 
                       <hr />
 
                       <div className="text-center">
-                        {terms && terms.length > 0 && !this.state.plantTexts && (
-                          <Dropdown as={ButtonGroup}>
-                            <Button
-                              variant="success"
-                              onClick={() => this.openModalPlant(groups, this.state.plantTerm || terms[0])}>
-                              <PlantIcon gapRight />
-                              <FormattedMessage
-                                id="app.groupsSupervisor.plantTermButton"
-                                defaultMessage="Plant groups for"
-                              />{' '}
-                              <TermLabel term={this.state.plantTerm || terms[0]} />
-                            </Button>
-                            <Dropdown.Toggle split variant="success" id="dropdown-split-basic" />
-                            <Dropdown.Menu>
-                              {terms.map(term => (
-                                <Dropdown.Item key={term.id} onClick={() => this.setState({ plantTerm: term })}>
-                                  <TermLabel term={term} />
-                                </Dropdown.Item>
-                              ))}
-                            </Dropdown.Menu>
-                          </Dropdown>
-                        )}
+                        <TheButtonGroup>
+                          {terms && terms.length > 0 && this.pageInDefaultMode() && (
+                            <Dropdown as={ButtonGroup}>
+                              <Button
+                                variant="success"
+                                onClick={() => this.openModalPlant(groups, this.state.plantTerm || terms[0])}>
+                                <PlantIcon gapRight />
+                                <FormattedMessage
+                                  id="app.groupsSupervisor.plantTermButton"
+                                  defaultMessage="Plant groups for"
+                                />{' '}
+                                <TermLabel term={this.state.plantTerm || terms[0]} />
+                              </Button>
+                              <Dropdown.Toggle split variant="success" id="dropdown-split-basic" />
+                              <Dropdown.Menu>
+                                {terms.map(term => (
+                                  <Dropdown.Item key={term.id} onClick={() => this.setState({ plantTerm: term })}>
+                                    <TermLabel term={term} />
+                                  </Dropdown.Item>
+                                ))}
+                              </Dropdown.Menu>
+                            </Dropdown>
+                          )}
 
-                        {this.state.plantTexts && (
-                          <TheButtonGroup>
+                          {this.state.plantTexts && (
+                            <>
+                              <Button
+                                variant={this.state.plantGroupsErrors ? 'danger' : 'success'}
+                                onClick={() => this.plantGroups(this.state.plantTerm || terms[0])}
+                                disabled={this.state.selectedGroupsCount === 0 || this.state.operationPending}>
+                                {this.state.operationPending ? <LoadingIcon gapRight /> : <PlantIcon gapRight />}
+                                <FormattedMessage
+                                  id="app.groupsSupervisor.plantTermGroupsConfirmButton"
+                                  defaultMessage="Plant Term Groups"
+                                />
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                disabled={this.state.operationPending}
+                                onClick={this.cancelGroupPlanting}>
+                                <CloseIcon gapRight />
+                                <FormattedMessage
+                                  id="app.groupsSupervisor.cancelPlantTermButton"
+                                  defaultMessage="Cancel Group Planting"
+                                />
+                              </Button>
+                            </>
+                          )}
+
+                          {this.pageInDefaultMode() && !isEmptyObject(getGroupsForArchiving(groups, terms)) && (
                             <Button
-                              variant={this.state.plantGroupsErrors ? 'danger' : 'success'}
-                              onClick={() => this.plantGroups(this.state.plantTerm || terms[0])}
-                              disabled={this.state.plantGroupsCount === 0 || this.state.plantGroupsPending}>
-                              {this.state.plantGroupsPending ? <LoadingIcon gapRight /> : <PlantIcon gapRight />}
+                              variant="danger"
+                              onClick={() => this.startArchiving(groups, terms)}
+                              disabled={this.state.operationPending}>
+                              <ArchiveIcon gapRight />
                               <FormattedMessage
-                                id="app.groupsSupervisor.plantTermGroupsConfirmButton"
-                                defaultMessage="Plant Term Groups"
+                                id="app.groupsSupervisor.startArchivingButton"
+                                defaultMessage="Select Groups for Archiving"
                               />
                             </Button>
-                            <Button
-                              variant="secondary"
-                              disabled={this.state.plantGroupsPending}
-                              onClick={this.cancelGroupPlanting}>
-                              <CloseIcon gapRight />
-                              <FormattedMessage
-                                id="app.groupsSupervisor.cancelPlantTermButton"
-                                defaultMessage="Cancel Group Planting"
-                              />
-                            </Button>
-                          </TheButtonGroup>
-                        )}
+                          )}
+                          {this.state.archiving && (
+                            <>
+                              <Button
+                                variant="danger"
+                                onClick={this.archiveSelectedGroups}
+                                disabled={this.state.selectedGroupsCount === 0 || this.state.operationPending}>
+                                {this.state.operationPending ? <LoadingIcon gapRight /> : <ArchiveIcon gapRight />}
+                                <FormattedMessage
+                                  id="app.groupsSupervisor.archiveButton"
+                                  defaultMessage="Archive Selected Groups"
+                                />
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                onClick={this.cancelArchiving}
+                                disabled={this.state.operationPending}>
+                                <CloseIcon gapRight />
+                                <FormattedMessage
+                                  id="app.groupsSupervisor.cancelArchivingButton"
+                                  defaultMessage="Cancel Archiving"
+                                />
+                              </Button>
+                            </>
+                          )}
+                        </TheButtonGroup>
                       </div>
                     </>
                   </Box>
@@ -408,7 +585,7 @@ class GroupsSuperadmin extends Component {
                     size="xl"
                     fullscreen="xl-down"
                     onHide={this.closeModalGroup}>
-                    <Modal.Header closeButton={!this.state.modalGroupPending}>
+                    <Modal.Header closeButton={!this.state.operationPending}>
                       <Modal.Title>
                         <FormattedMessage
                           id="app.groupsSupervisor.addAttributeModal.title"
