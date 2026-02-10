@@ -148,6 +148,8 @@
   "app.homepage.termsPage": "Management of terms and their related dates (when they are active for students and teachers).",
   "app.homepage.title": "SiS-CodEx Extension",
   "app.homepage.userPage": "The personal data integration page allows updating ReCodEx user profile (name, titles, email) using data from SIS.",
+  "app.homepage.userSessionExpired": "Your user session has expired",
+  "app.homepage.userSessionExpiredInfo": "You need to initialize a new session by re-entering this application from ReCodEx.",
   "app.localizedTexts.validation.noLocalizedText": "Please enable at least one tab of localized texts.",
   "app.notifications.hideAll": "Only new notifications",
   "app.notifications.showAll": "Show {count, plural, one {old notification} two {two old notifications} other {all # notifications}}",

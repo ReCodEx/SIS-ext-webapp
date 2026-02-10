@@ -11,11 +11,9 @@ import { loggedInUserIdSelector, accessTokenSelector } from '../../redux/selecto
 import { fetchUserIfNeeded } from '../../redux/modules/users.js';
 import { fetchUserStatus } from '../../redux/selectors/users.js';
 import { isTokenValid, isTokenInNeedOfRefreshment } from '../../redux/helpers/token';
-import { addNotification } from '../../redux/modules/notifications.js';
 import { logout, refresh } from '../../redux/modules/auth.js';
 import { resourceStatus } from '../../redux/helpers/resourceManager';
 import { suspendAbortPendingRequestsOptimization } from '../../pages/routes.js';
-import { SESSION_EXPIRED_MESSAGE } from '../../redux/helpers/api/tools.js';
 import withRouter, { withRouterProps } from '../../helpers/withRouter.js';
 
 import './siscodex.css';
@@ -69,20 +67,18 @@ class App extends Component {
    * must be checked more often.
    */
   checkAuthentication = () => {
-    const { isLoggedIn, accessToken, refreshToken, logout, addNotification } = this.props;
+    const { isLoggedIn, accessToken, refreshToken, logout } = this.props;
 
     const token = accessToken ? accessToken.toJS() : null;
     if (isLoggedIn) {
       if (!isTokenValid(token)) {
         logout();
-        addNotification(SESSION_EXPIRED_MESSAGE, false);
       } else if (isTokenInNeedOfRefreshment(token) && !this.isRefreshingToken) {
         suspendAbortPendingRequestsOptimization();
         this.isRefreshingToken = true;
         refreshToken()
           .catch(() => {
             logout();
-            addNotification(SESSION_EXPIRED_MESSAGE, false);
           })
           .then(() => {
             this.isRefreshingToken = false;
@@ -104,7 +100,6 @@ App.propTypes = {
   loadAsync: PropTypes.func.isRequired,
   refreshToken: PropTypes.func.isRequired,
   logout: PropTypes.func.isRequired,
-  addNotification: PropTypes.func.isRequired,
   location: withRouterProps.location,
 };
 
@@ -123,7 +118,6 @@ export default withRouter(
       loadAsync: userId => App.loadAsync({}, dispatch, { userId }),
       refreshToken: () => dispatch(refresh()),
       logout: () => dispatch(logout()),
-      addNotification: (msg, successful) => dispatch(addNotification(msg, successful)),
     })
   )(App)
 );

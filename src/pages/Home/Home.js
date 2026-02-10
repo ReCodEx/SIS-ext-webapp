@@ -7,6 +7,7 @@ import { Row, Col } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 
 import Page from '../../components/layout/Page';
+import PageContent from '../../components/layout/PageContent';
 import Icon, {
   GroupFocusIcon,
   HomeIcon,
@@ -87,6 +88,33 @@ class Home extends Component {
       params: { token = null },
       links: { USER_URI, TERMS_URI, GROUPS_STUDENT_URI, GROUPS_TEACHER_URI, GROUPS_SUPERADMIN_URI },
     } = this.props;
+
+    if (!loggedInUser && !token) {
+      return (
+        <PageContent
+          icon={<HomeIcon />}
+          title={<FormattedMessage id="app.homepage.title" defaultMessage="SiS-CodEx Extension" />}
+          windowTitle={<FormattedMessage id="app.homepage.title" defaultMessage="SiS-CodEx Extension" />}>
+          <Callout variant="warning" className="my-3">
+            <h4>
+              <FormattedMessage id="app.homepage.userSessionExpired" defaultMessage="Your user session has expired" />
+            </h4>
+            <p>
+              <FormattedMessage
+                id="app.homepage.userSessionExpiredInfo"
+                defaultMessage="You need to initialize a new session by re-entering this application from ReCodEx."
+              />
+            </p>
+            <p>
+              <a href={getReturnUrl()}>
+                <ReturnIcon gapRight />
+                <FormattedMessage id="app.homepage.returnToReCodEx" defaultMessage="Return to ReCodEx..." />
+              </a>
+            </p>
+          </Callout>
+        </PageContent>
+      );
+    }
 
     return (
       <Page
