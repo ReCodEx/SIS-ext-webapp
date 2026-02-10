@@ -148,6 +148,8 @@
   "app.homepage.termsPage": "Správa semestrů a jejich souvisejících dat (kdy jsou aktivní pro studenty a učitele).",
   "app.homepage.title": "Rozšíření SIS-CodEx",
   "app.homepage.userPage": "Stránka s osobními údaji umožnujě synchronizovat uživatelský profil (jméno, tituly, email) s daty ze SISu.",
+  "app.homepage.userSessionExpired": "Vaše uživatelská relace vypršela",
+  "app.homepage.userSessionExpiredInfo": "Musíte inicializovat novou relaci opětovným vstupem do této aplikace z ReCodExu.",
   "app.localizedTexts.validation.noLocalizedText": "Prosíme povolte alespoň jednu záložku s lokalizovanými texty.",
   "app.notifications.hideAll": "Pouze nové notifikace",
   "app.notifications.showAll": "Zobrazit {count, plural, one {jednu starou notifikaci} two {dvě staré notifikace} other {# starých notifikací}}",

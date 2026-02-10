@@ -10,7 +10,7 @@ import Home from './Home';
 import Terms from './Terms';
 import User from './User';
 
-import { createLoginLinkWithRedirect, abortAllPendingRequests } from '../redux/helpers/api/tools.js';
+import { abortAllPendingRequests } from '../redux/helpers/api/tools.js';
 import { API_BASE, URL_PATH_PREFIX } from '../helpers/config.js';
 import withRouter from '../helpers/withRouter.js';
 
@@ -83,7 +83,7 @@ const routesDescriptors = [
 
 const getRedirect = (routeObj, urlPath, isLoggedIn) => {
   if (routeObj.auth !== undefined && routeObj.auth !== isLoggedIn) {
-    return routeObj.auth ? createLoginLinkWithRedirect(urlPath) : getLinks().DASHBOARD_URI;
+    return getLinks().HOME_URI;
   } else {
     return null;
   }

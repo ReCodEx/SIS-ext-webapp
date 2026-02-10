@@ -1,11 +1,10 @@
 import statusCode from 'statuscode';
 import { flatten } from 'flat';
-import { Buffer } from 'buffer';
 
 import { addNotification } from '../../modules/notifications.js';
 import { newPendingFetchOperation, completedFetchOperation } from '../../modules/app.js';
 import { isTokenValid, decode } from '../../helpers/token';
-import { API_BASE, URL_PATH_PREFIX } from '../../../helpers/config.js';
+import { API_BASE } from '../../../helpers/config.js';
 import { actionTypes as authActionTypes } from '../../modules/authTypes.js';
 import { canUseDOM } from '../../../helpers/common.js';
 
@@ -134,15 +133,6 @@ export const logout = () => ({
   type: authActionTypes.LOGOUT,
 });
 
-export const SESSION_EXPIRED_MESSAGE =
-  'Your session expired and you were automatically logged out of the ReCodEx system.';
-export const LOGIN_URI_PREFIX = 'login';
-
-export const createLoginLinkWithRedirect = redirLocation => {
-  const redirBase64 = Buffer.from(redirLocation).toString('base64');
-  return `${URL_PATH_PREFIX}/${LOGIN_URI_PREFIX}/${encodeURIComponent(redirBase64)}`;
-};
-
 /**
  * Create a request and setup the processing of the response.
  * @param {Object} request The request settings and data
@@ -170,7 +160,6 @@ export const createApiCallPromise = (
       if (res.status === 401 && !isTokenValid(decode(accessToken)) && dispatch) {
         abortAllPendingRequests();
         dispatch(logout());
-        dispatch(addNotification(SESSION_EXPIRED_MESSAGE, false));
         return Promise.reject(res);
       }
 
@@ -184,7 +173,7 @@ export const createApiCallPromise = (
 };
 
 /**
- * A specific error means that there is a problem with the Internet connectin or the server is down.
+ * A specific error means that there is a problem with the Internet connecting or the server is down.
  * @param {Object} err The error description
  * @param {Function} dispatch
  */
