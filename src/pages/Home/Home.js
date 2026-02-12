@@ -23,10 +23,10 @@ import Icon, {
 import Callout from '../../components/widgets/Callout';
 
 import { setLang } from '../../redux/modules/app.js';
-import { login, logout } from '../../redux/modules/auth.js';
+import { login, logout, statusTypes as authStatusTypes } from '../../redux/modules/auth.js';
 import { fetchUserIfNeeded } from '../../redux/modules/users.js';
 import { loggedInUserSelector } from '../../redux/selectors/users.js';
-import { loggedInUserIdSelector } from '../../redux/selectors/auth.js';
+import { loggedInUserIdSelector, loginStatusSelector } from '../../redux/selectors/auth.js';
 
 import { getReturnUrl, setReturnUrl } from '../../helpers/localStorage.js';
 import { knownLocalesNames } from '../../helpers/localizedData.js';
@@ -85,11 +85,12 @@ class Home extends Component {
   render() {
     const {
       loggedInUser,
+      loginStatus,
       params: { token = null },
       links: { USER_URI, TERMS_URI, GROUPS_STUDENT_URI, GROUPS_TEACHER_URI, GROUPS_SUPERADMIN_URI },
     } = this.props;
 
-    if (!loggedInUser && !token) {
+    if (!loggedInUser && (!token || loginStatus === authStatusTypes.LOGIN_FAILED)) {
       return (
         <PageContent
           icon={<HomeIcon />}
@@ -97,7 +98,14 @@ class Home extends Component {
           windowTitle={<FormattedMessage id="app.homepage.title" defaultMessage="SiS-CodEx Extension" />}>
           <Callout variant="warning" className="my-3">
             <h4>
-              <FormattedMessage id="app.homepage.userSessionExpired" defaultMessage="Your user session has expired" />
+              {!token ? (
+                <FormattedMessage
+                  id="app.homepage.userSessionExpired"
+                  defaultMessage="Your user session has expired or you have logged out"
+                />
+              ) : (
+                <FormattedMessage id="app.homepage.loginFailed" defaultMessage="Authentication process failed" />
+              )}
             </h4>
             <p>
               <FormattedMessage
@@ -342,6 +350,7 @@ Home.propTypes = {
   }),
   loggedInUserId: PropTypes.string,
   loggedInUser: ImmutablePropTypes.map,
+  loginStatus: PropTypes.string,
   loadAsync: PropTypes.func.isRequired,
   setLang: PropTypes.func.isRequired,
   login: PropTypes.func.isRequired,
@@ -353,6 +362,7 @@ export default connect(
   state => ({
     loggedInUserId: loggedInUserIdSelector(state),
     loggedInUser: loggedInUserSelector(state),
+    loginStatus: loginStatusSelector(state),
   }),
   dispatch => ({
     loadAsync: userId => Home.loadAsync({ userId }, dispatch),
