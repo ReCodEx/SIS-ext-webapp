@@ -86,9 +86,15 @@ class GroupsTeacher extends Component {
     selectedGroupId: '',
   };
 
-  startBind = (bindEvent, selectGroups) => this.setState({ bindEvent, selectGroups });
+  startBind = (bindEvent, selectGroups) => {
+    const selectedGroupId = selectGroups[0]?.id || '';
+    this.setState({ bindEvent, selectGroups, selectedGroupId });
+  };
 
-  startCreate = (createEvent, selectGroups) => this.setState({ createEvent, selectGroups });
+  startCreate = (createEvent, selectGroups) => {
+    const selectedGroupId = selectGroups[0]?.id || '';
+    this.setState({ createEvent, selectGroups, selectedGroupId });
+  };
 
   closeModal = () =>
     this.setState({
@@ -102,25 +108,29 @@ class GroupsTeacher extends Component {
 
   handleGroupChange = ev => this.setState({ selectedGroupId: ev.target.value });
 
-  completeModalOperation = () => {
+  completeModalOperation = async () => {
     const { loggedInUserId, bind, create, loadAsync } = this.props;
 
-    this.setState({ modalPending: true });
-    if (this.state.bindEvent !== null) {
-      bind(this.state.selectedGroupId, this.state.bindEvent).then(
-        () => loadAsync(loggedInUserId).then(this.closeModal),
-        error => this.setState({ modalPending: false, modalError: error?.message || 'unknown error' })
-      );
-    } else if (this.state.createEvent !== null) {
-      create(this.state.selectedGroupId, this.state.createEvent)
-        .then(
-          () => loadAsync(loggedInUserId),
-          error => this.setState({ modalPending: false, modalError: error?.message || 'unknown error' })
-        )
-        .then(this.closeModal);
-    } else {
+    if (!this.state.bindEvent && !this.state.createEvent) {
       this.closeModal();
+      return;
     }
+
+    this.setState({ modalPending: true });
+
+    try {
+      if (this.state.bindEvent !== null) {
+        await bind(this.state.selectedGroupId, this.state.bindEvent);
+      } else if (this.state.createEvent !== null) {
+        await create(this.state.selectedGroupId, this.state.createEvent);
+      }
+    } catch (error) {
+      this.setState({ modalPending: false, modalError: error?.message || 'unknown error' });
+      return;
+    }
+
+    await loadAsync(loggedInUserId);
+    this.closeModal();
   };
 
   unbindAndReload = (groupId, eventId) => {
@@ -376,10 +386,10 @@ class GroupsTeacher extends Component {
                         </FormLabel>
                         <InputGroup>
                           <FormSelect
-                            className="form-control"
+                            className={'form-control' + (!this.state.selectGroups?.length ? ' text-danger' : '')}
                             value={this.state.selectedGroupId}
+                            disabled={!this.state.selectGroups?.length}
                             onChange={this.handleGroupChange}>
-                            <option value="">...</option>
                             {this.state.selectGroups?.map(group => (
                               <option key={group.id} value={group.id}>
                                 {group.fullName}&nbsp;&nbsp;
@@ -393,6 +403,15 @@ class GroupsTeacher extends Component {
                                 )}
                               </option>
                             ))}
+
+                            {!this.state.selectGroups?.length && (
+                              <option value="">
+                                <FormattedMessage
+                                  id="app.groupsTeacher.noGroupsForSelection"
+                                  defaultMessage="There are no suitable groups to select from..."
+                                />
+                              </option>
+                            )}
                           </FormSelect>
                         </InputGroup>
                       </FormGroup>

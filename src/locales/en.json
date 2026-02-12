@@ -122,6 +122,7 @@
   "app.groupsTeacher.createParentGroupLabelExplanation": "Only groups that are located in the hierarchy under both `{course}` course group and `{term}` term group are listed.",
   "app.groupsTeacher.lastRefreshInfo": "The list of courses taught by you was last downloaded from SIS",
   "app.groupsTeacher.noActiveTerms": "There are currently no terms available for teachers.",
+  "app.groupsTeacher.noGroupsForSelection": "There are no suitable groups to select from...",
   "app.groupsTeacher.notTeacher": "This page is available only to teachers.",
   "app.groupsTeacher.scheduledAt": "Scheduled at",
   "app.groupsTeacher.selectGroupForBinding": "Select Group for Binding",

@@ -122,6 +122,7 @@
   "app.groupsTeacher.createParentGroupLabelExplanation": "Zobrazují se pouze skupiny, které jsou umístěny zároveň pod skupinou předmětu `{course}` a skupinou semestru `{term}`.",
   "app.groupsTeacher.lastRefreshInfo": "Seznam předmětů, které vyučujete, byl naposledy stažen ze SISu",
   "app.groupsTeacher.noActiveTerms": "V tuto chvíli nejsou učitelům dostupné žádné semestry.",
+  "app.groupsTeacher.noGroupsForSelection": "Nejsou dostupné žádné vhodné skupiny pro výběr...",
   "app.groupsTeacher.notTeacher": "Tato stránka je dostupná pouze učitelům.",
   "app.groupsTeacher.scheduledAt": "Rozvrženo na",
   "app.groupsTeacher.selectGroupForBinding": "Vyberte skupinu pro svázání",
