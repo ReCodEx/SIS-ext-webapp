@@ -15,7 +15,7 @@ export const accessTokenExpiration = createSelector(accessTokenSelector, token =
 );
 export const loggedInUserIdSelector = createSelector(getAuth, getLoggedInUserId);
 
-export const loginStatusSelector = createSelector(getAuth, auth => auth.getIn(['status']));
+export const loginStatusSelector = createSelector(getAuth, auth => auth.getIn(['status', 'recodex']));
 
 export const loginErrorSelector = createSelector(getAuth, auth => auth.getIn(['errors', 'recodex'])?.toJS() || null);
 

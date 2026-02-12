@@ -158,7 +158,7 @@ const CoursesGroupsList = ({
                                   <BindIcon gapRight />
                                   <FormattedMessage
                                     id="app.coursesGroupsList.bind"
-                                    defaultMessage="Bind Existing Group"
+                                    defaultMessage="Bind with Existing Group"
                                   />
                                 </Button>
                               )}
