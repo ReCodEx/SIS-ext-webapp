@@ -47,24 +47,23 @@ const CoursesGroupsList = ({
   const showAll = allowHiding ? showAllState : true;
 
   return (
-    <ResourceRenderer resource={groups}>
-      {groups => {
-        const sisGroups = getSisGroups(groups || {}, locale);
+    <ResourceRenderer resource={sisEvents}>
+      {sisEvents => {
+        if (!sisEvents || sisEvents.length === 0) {
+          return (
+            <div className="m-3 text-center text-muted">
+              <FormattedMessage
+                id="app.coursesGroupsList.noCourses"
+                defaultMessage="You have no courses enrolled for this term at present time."
+              />
+            </div>
+          );
+        }
 
         return (
-          <ResourceRenderer resource={sisEvents}>
-            {sisEvents => {
-              if (!sisEvents || sisEvents.length === 0) {
-                return (
-                  <div className="m-3 text-center text-muted">
-                    <FormattedMessage
-                      id="app.coursesGroupsList.noCourses"
-                      defaultMessage="There are currently no courses available for this term."
-                    />
-                  </div>
-                );
-              }
-
+          <ResourceRenderer resource={groups}>
+            {groups => {
+              const sisGroups = getSisGroups(groups || {}, locale);
               const sortedSisEvents = getSortedSisEvents(sisEvents, locale);
               const filteredSisEvents = sortedSisEvents.filter(sisEvent => sisGroups[sisEvent.sisId]?.length > 0);
 

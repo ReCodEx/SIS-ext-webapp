@@ -53,6 +53,11 @@ const getSortedTerms = lruMemoize(terms => {
     .sort((b, a) => a.year * 10 + a.term - (b.year * 10 + b.term));
 });
 
+const getFutureTerms = lruMemoize(terms => {
+  const now = Math.floor(Date.now() / 1000);
+  return terms.filter(term => term.teachersFrom > now).sort((a, b) => a.year * 10 + a.term - (b.year * 10 + b.term));
+});
+
 const getAllSisIds = results => {
   const eventIds = new Set();
   const courseIds = new Set();
@@ -190,68 +195,91 @@ class GroupsTeacher extends Component {
             <ResourceRenderer resourceArray={terms}>
               {terms => (
                 <>
-                  <Callout type="info" className="mb-3">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="float-end"
-                      disabled={!userReady || !allReady}
-                      onClick={() => loadAsync(user.id, 0)}>
-                      {userReady && allReady ? <RefreshIcon gapRight /> : <LoadingIcon gapRight />}
-                      <FormattedMessage id="app.groups.refreshButton" defaultMessage="Reload from SIS" />
-                    </Button>
-                    <FormattedMessage
-                      id="app.groupsTeacher.lastRefreshInfo"
-                      defaultMessage="The list of courses taught by you was last downloaded from SIS"
-                    />
-                    &nbsp;&nbsp;
-                    <i>
-                      <DateTime unixts={user.sisEventsLoaded} showSeconds showRelative />
-                    </i>
-                    .
-                  </Callout>
-
                   {getSortedTerms(terms).length > 0 ? (
-                    getSortedTerms(terms).map((term, idx) => (
-                      <Box
-                        key={`${term.year}-${term.term}`}
-                        title={
-                          <>
-                            <TermLabel term={term} icon emphasize longNames />
-                            {refetchedSelector(term.year, term.term) && (
-                              <DownloadIcon
-                                gapLeft={3}
-                                className="text-success"
-                                tooltip={
-                                  <FormattedMessage
-                                    id="app.groups.coursesRefetched"
-                                    defaultMessage="The courses were just re-downloaded from SIS."
-                                  />
-                                }
-                                tooltipId={`fresh-${term.year}-${term.term}`}
-                                tooltipPlacement="bottom"
-                              />
-                            )}
-                          </>
-                        }
-                        unlimitedHeight
-                        collapsable
-                        isOpen={idx === 0}>
-                        <CoursesGroupsList
-                          sisEvents={sisEventsSelector(term.year, term.term)}
-                          groups={groups}
-                          bind={this.startBind}
-                          unbind={this.unbindAndReload}
-                          create={this.startCreate}
+                    <>
+                      <Callout type="info" className="mb-3">
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          className="float-end"
+                          disabled={!userReady || !allReady}
+                          onClick={() => loadAsync(user.id, 0)}>
+                          {userReady && allReady ? <RefreshIcon gapRight /> : <LoadingIcon gapRight />}
+                          <FormattedMessage id="app.groups.refreshButton" defaultMessage="Reload from SIS" />
+                        </Button>
+                        <FormattedMessage
+                          id="app.groupsTeacher.lastRefreshInfo"
+                          defaultMessage="The list of courses taught by you was last downloaded from SIS"
                         />
-                      </Box>
-                    ))
+                        &nbsp;&nbsp;
+                        <i>
+                          <DateTime unixts={user.sisEventsLoaded} showSeconds showRelative />
+                        </i>
+                        .
+                      </Callout>
+
+                      {getSortedTerms(terms).map((term, idx) => (
+                        <Box
+                          key={`${term.year}-${term.term}`}
+                          title={
+                            <>
+                              <TermLabel term={term} icon emphasize longNames />
+                              {refetchedSelector(term.year, term.term) && (
+                                <DownloadIcon
+                                  gapLeft={3}
+                                  className="text-success"
+                                  tooltip={
+                                    <FormattedMessage
+                                      id="app.groups.coursesRefetched"
+                                      defaultMessage="The courses were just re-downloaded from SIS."
+                                    />
+                                  }
+                                  tooltipId={`fresh-${term.year}-${term.term}`}
+                                  tooltipPlacement="bottom"
+                                />
+                              )}
+                            </>
+                          }
+                          unlimitedHeight
+                          collapsable
+                          isOpen={idx === 0}>
+                          <CoursesGroupsList
+                            sisEvents={sisEventsSelector(term.year, term.term)}
+                            groups={groups}
+                            bind={this.startBind}
+                            unbind={this.unbindAndReload}
+                            create={this.startCreate}
+                          />
+                        </Box>
+                      ))}
+                    </>
                   ) : (
                     <Callout type="info">
                       <FormattedMessage
                         id="app.groupsTeacher.noActiveTerms"
                         defaultMessage="There are currently no terms available for teachers."
                       />
+
+                      {getFutureTerms(terms).length > 0 && (
+                        <>
+                          {' '}
+                          <FormattedMessage
+                            id="app.groupsTeacher.futureTerms"
+                            defaultMessage="However, there are future terms that will be come available for teachers at the following dates:"
+                          />
+                          <ul>
+                            {getFutureTerms(terms).map(term => (
+                              <li key={`${term.year}-${term.term}`}>
+                                <TermLabel term={term} />
+                                &nbsp;&nbsp;
+                                <FormattedMessage id="generic.from" defaultMessage="from" />
+                                &nbsp;&nbsp;
+                                <DateTime unixts={term.teachersFrom} showTime={false} />
+                              </li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
                     </Callout>
                   )}
 

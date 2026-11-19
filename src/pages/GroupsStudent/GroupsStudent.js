@@ -40,6 +40,11 @@ const getSortedTerms = lruMemoize(terms => {
     .sort((b, a) => a.year * 10 + a.term - (b.year * 10 + b.term));
 });
 
+const getFutureTerms = lruMemoize(terms => {
+  const now = Math.floor(Date.now() / 1000);
+  return terms.filter(term => term.studentsFrom > now).sort((a, b) => a.year * 10 + a.term - (b.year * 10 + b.term));
+});
+
 const getAllSisIds = results => {
   const sisIds = new Set();
   results.forEach(({ value }) => {
@@ -76,12 +81,14 @@ class GroupsStudent extends Component {
                 () => dispatch(fetchStudentCourses(term.year, term.term)) // fallback (no expiration = from cache only)
               )
             )
-        ).then(values =>
-          Promise.all([
-            dispatch(fetchStudentGroups(getAllSisIds(values))),
-            dispatch(fetchUser(userId, { allowReload: true })),
-          ])
-        );
+        ).then(values => {
+          const promises = [dispatch(fetchUser(userId, { allowReload: true }))];
+          const sisIds = getAllSisIds(values);
+          if (sisIds && sisIds.length > 0) {
+            promises.push(dispatch(fetchStudentGroups()));
+          }
+          return Promise.all(promises);
+        });
       }),
     ]);
 
@@ -98,31 +105,31 @@ class GroupsStudent extends Component {
         {user =>
           isStudentRole(user.role) ? (
             <ResourceRenderer resourceArray={terms}>
-              {terms => (
-                <>
-                  <Callout type="info" className="mb-3">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="float-end"
-                      disabled={!userReady || !allReady}
-                      onClick={() => loadAsync(user.id, 0)}>
-                      {userReady && allReady ? <RefreshIcon gapRight /> : <LoadingIcon gapRight />}
-                      <FormattedMessage id="app.groups.refreshButton" defaultMessage="Reload from SIS" />
-                    </Button>
-                    <FormattedMessage
-                      id="app.groupsStudent.lastRefreshInfo"
-                      defaultMessage="The list of enrolled courses was last downloaded from SIS"
-                    />
-                    &nbsp;&nbsp;
-                    <i>
-                      <DateTime unixts={user.sisEventsLoaded} showSeconds showRelative />
-                    </i>
-                    .
-                  </Callout>
+              {terms =>
+                getSortedTerms(terms).length > 0 ? (
+                  <>
+                    <Callout type="info" className="mb-3">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        className="float-end"
+                        disabled={!userReady || !allReady}
+                        onClick={() => loadAsync(user.id, 0)}>
+                        {userReady && allReady ? <RefreshIcon gapRight /> : <LoadingIcon gapRight />}
+                        <FormattedMessage id="app.groups.refreshButton" defaultMessage="Reload from SIS" />
+                      </Button>
+                      <FormattedMessage
+                        id="app.groupsStudent.lastRefreshInfo"
+                        defaultMessage="The list of enrolled courses was last downloaded from SIS"
+                      />
+                      &nbsp;&nbsp;
+                      <i>
+                        <DateTime unixts={user.sisEventsLoaded} showSeconds showRelative />
+                      </i>
+                      .
+                    </Callout>
 
-                  {getSortedTerms(terms).length > 0 ? (
-                    getSortedTerms(terms).map((term, idx) => (
+                    {getSortedTerms(terms).map((term, idx) => (
                       <Box
                         key={`${term.year}-${term.term}`}
                         title={
@@ -154,17 +161,38 @@ class GroupsStudent extends Component {
                           joinGroup={joinGroup}
                         />
                       </Box>
-                    ))
-                  ) : (
-                    <Callout type="info">
-                      <FormattedMessage
-                        id="app.groupsStudent.noActiveTerms"
-                        defaultMessage="There are currently no terms available for students."
-                      />
-                    </Callout>
-                  )}
-                </>
-              )}
+                    ))}
+                  </>
+                ) : (
+                  <Callout type="info">
+                    <FormattedMessage
+                      id="app.groupsStudent.noActiveTerms"
+                      defaultMessage="There are currently no terms available for students."
+                    />
+
+                    {getFutureTerms(terms).length > 0 && (
+                      <>
+                        {' '}
+                        <FormattedMessage
+                          id="app.groupsStudent.futureTerms"
+                          defaultMessage="However, there are future terms that will be come available for students at the following dates:"
+                        />
+                        <ul>
+                          {getFutureTerms(terms).map(term => (
+                            <li key={`${term.year}-${term.term}`}>
+                              <TermLabel term={term} />
+                              &nbsp;&nbsp;
+                              <FormattedMessage id="generic.from" defaultMessage="from" />
+                              &nbsp;&nbsp;
+                              <DateTime unixts={term.studentsFrom} showTime={false} />
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
+                  </Callout>
+                )
+              }
             </ResourceRenderer>
           ) : (
             <Callout type="warning">
